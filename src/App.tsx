@@ -261,12 +261,15 @@ function App() {
       <button className="sidebar-toggle" title={sidebarVisible ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"} onClick={() => setSidebarVisible(v => !v)}>{sidebarVisible ? <PanelLeftClose size={15}/> : <PanelLeftOpen size={15}/>}</button>
     </div>
     <div className="workspace">
-      <aside className="explorer">
-        <div className="explorer-root" title={root ?? "Open a folder"} onClick={() => void openFolder()}>
-          <span>{root ? "▾" : "▸"}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
-        </div>
-        {root && tree[root] ? <div className="tree-list">{renderTree(tree[root])}</div> : <div className="empty-tree">Ctrl+Shift+O<br/>to open a folder</div>}
-      </aside>
+      {sidebarVisible && <>
+        <aside className="explorer" style={{ width: sidebarWidth }}>
+          <div className="explorer-root" title={root ?? "Open a folder"} onClick={() => void openFolder()}>
+            <span>{root ? "▾" : "▸"}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
+          </div>
+          {root && tree[root] ? <div className="tree-list">{renderTree(tree[root])}</div> : <div className="empty-tree">Ctrl+Shift+O<br/>to open a folder</div>}
+        </aside>
+        <div className="sidebar-resize" onMouseDown={startSidebarDrag} title="Drag to resize explorer"><span/></div>
+      </>}
       <section className="editor-column">
         <div className="editor-host" ref={editorHost}>
           {!active && <div className="empty-editor">Open a file or create a new one<br/><span>Ctrl+O · Ctrl+N</span></div>}
