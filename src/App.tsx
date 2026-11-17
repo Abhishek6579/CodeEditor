@@ -46,14 +46,25 @@ const catppuccinHighlight = HighlightStyle.define([
   { tag: [tags.string, tags.docString, tags.character, tags.attributeValue], color: "#a6e3a1" },
   { tag: [tags.number, tags.integer, tags.float, tags.bool], color: "#fab387" },
   { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword, tags.operatorKeyword], color: "#cba6f7" },
-  { tag: [tags.typeName, tags.className, tags.namespace], color: "#f9e2af" },
+
+  // Declarations and references: keep these more specific rules ahead of the
+  // general identifier rule so they remain visually distinct.
+  { tag: tags.definition(tags.function(tags.variableName)), color: "#89b4fa", fontWeight: "bold" },
   { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: "#89b4fa" },
-  { tag: [tags.variableName, tags.self, tags.special(tags.variableName)], color: "#cdd6f4" },
+  { tag: tags.definition(tags.variableName), color: "#cba6f7", fontWeight: "bold" },
+  { tag: tags.constant(tags.variableName), color: "#fab387" },
+  { tag: tags.standard(tags.variableName), color: "#94e2d5" },
+  { tag: tags.special(tags.variableName), color: "#f38ba8" },
+  { tag: tags.local(tags.variableName), color: "#f5c2e7" },
+  { tag: [tags.variableName, tags.self], color: "#cdd6f4" },
+
+  { tag: [tags.typeName, tags.className], color: "#f9e2af" },
+  { tag: tags.namespace, color: "#cba6f7" },
   { tag: [tags.propertyName, tags.attributeName], color: "#89dceb" },
+  { tag: [tags.macroName, tags.annotation, tags.meta], color: "#fab387" },
   { tag: [tags.operator, tags.punctuation, tags.separator], color: "#94e2d5" },
   { tag: [tags.tagName], color: "#f38ba8" },
   { tag: [tags.regexp, tags.escape], color: "#f5c2e7" },
-  { tag: [tags.meta, tags.annotation], color: "#fab387" },
   { tag: [tags.heading, tags.heading1, tags.heading2, tags.heading3], color: "#89b4fa", fontWeight: "bold" },
   { tag: [tags.invalid], color: "#f38ba8", textDecoration: "underline wavy" }
 ]);
