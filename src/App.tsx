@@ -207,7 +207,7 @@ function App() {
   useEffect(() => {
     if (!terminalHost.current || terminal.current) return;
     const term = new Terminal({
-      cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize,
+      cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize: terminalFontSize,
       theme: { background: "#11111b", foreground: "#cdd6f4", cursor: "#f5e0dc", cursorAccent: "#11111b", selectionBackground: "#45475a", black: "#181825", red: "#f38ba8", green: "#a6e3a1", yellow: "#f9e2af", blue: "#89b4fa", magenta: "#cba6f7", cyan: "#89dceb", white: "#bac2de", brightBlack: "#585b70", brightRed: "#f38ba8", brightGreen: "#a6e3a1", brightYellow: "#f9e2af", brightBlue: "#89b4fa", brightMagenta: "#cba6f7", brightCyan: "#89dceb", brightWhite: "#a6adc8" }
     });
     const fit = new FitAddon();
@@ -231,8 +231,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (terminal.current) terminal.current.options.fontSize = fontSize;
-  }, [fontSize]);
+    if (terminal.current) terminal.current.options.fontSize = terminalFontSize;
+  }, [terminalFontSize]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -244,9 +244,21 @@ function App() {
       if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
       if (mod && e.key.toLowerCase() === "w") { e.preventDefault(); if (activeIdRef.current !== null) closeDoc(activeIdRef.current); }
       if (mod && e.key === "`") { e.preventDefault(); terminal.current?.focus(); }
-      if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setFontSize(v => Math.min(24, v + 1)); }
-      if (mod && e.key === "-") { e.preventDefault(); setFontSize(v => Math.max(10, v - 1)); }
-      if (mod && e.key === "0") { e.preventDefault(); setFontSize(14); }
+      if (mod && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        if (focusedSurface === "terminal") setTerminalFontSize(v => Math.min(24, v + 1));
+        else setEditorFontSize(v => Math.min(24, v + 1));
+      }
+      if (mod && e.key === "-") {
+        e.preventDefault();
+        if (focusedSurface === "terminal") setTerminalFontSize(v => Math.max(8, v - 1));
+        else setEditorFontSize(v => Math.max(10, v - 1));
+      }
+      if (mod && e.key === "0") {
+        e.preventDefault();
+        if (focusedSurface === "terminal") setTerminalFontSize(13);
+        else setEditorFontSize(14);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
