@@ -10,21 +10,28 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [{
-      "title": "Code",
-      "width": 1280,
-      "height": 820,
-      "minWidth": 640,
-      "minHeight": 420,
-      "center": true,
-      "decorations": false,
-      "backgroundColor": "#191a26"
-    }],
-    "security": { "csp": null }
+    "windows": [
+      {
+        "title": "Code",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 640,
+        "minHeight": 420,
+        "center": true,
+        "decorations": false,
+        "backgroundColor": "#191a26"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "appimage"],
+    "targets": [
+      "deb",
+      "appimage"
+    ],
     "category": "Development",
     "shortDescription": "A minimal code editor with an integrated terminal",
     "longDescription": "A lightweight Linux desktop code editor built with Tauri, React, TypeScript and CodeMirror. Includes a project explorer, syntax highlighting, file tabs, workspace restoration and an integrated terminal.",
@@ -32,6 +39,8 @@
     "homepage": "https://github.com/Abhishek6579/CodeEditor",
     "license": "MIT",
     "licenseFile": "../LICENSE",
-    "icon": []
+    "icon": [
+      "icons/icon.png"
+    ]
   }
 }
