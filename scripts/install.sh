@@ -73,4 +73,10 @@ if command -v update-desktop-database >/dev/null 2>&1; then
   sudo update-desktop-database "$INSTALL_PREFIX/share/applications" >/dev/null 2>&1 || true
 fi
 
+# Remove files installed by the previous Code-branded build.
+sudo rm -f "$INSTALL_PREFIX/bin/code-editor"
+sudo rm -f "$INSTALL_PREFIX/share/applications/code-editor.desktop"
+sudo rm -f "$INSTALL_PREFIX/share/icons/hicolor/512x512/apps/code-editor.png"
+sudo rm -rf "$INSTALL_PREFIX/share/licenses/code-editor"
+
 log "Installation complete. Launch Milize from your application menu or run: milize"

@@ -9,6 +9,12 @@ sudo rm -f /usr/local/share/applications/milize.desktop
 sudo rm -f /usr/local/share/icons/hicolor/512x512/apps/milize.png
 sudo rm -rf /usr/local/share/licenses/milize
 
+# Clean up paths used by the previous Code-branded installation.
+sudo rm -f /usr/local/bin/code-editor
+sudo rm -f /usr/local/share/applications/code-editor.desktop
+sudo rm -f /usr/local/share/icons/hicolor/512x512/apps/code-editor.png
+sudo rm -rf /usr/local/share/licenses/code-editor
+
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   sudo gtk-update-icon-cache -f /usr/local/share/icons/hicolor >/dev/null 2>&1 || true
 fi
