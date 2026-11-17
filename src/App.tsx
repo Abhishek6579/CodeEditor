@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { EditorState } from "@codemirror/state";
-import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { bracketMatching, indentOnInput } from "@codemirror/language";
+import { EditorView, keymap } from "@codemirror/view";
+
+
 import { cpp } from "@codemirror/lang-cpp";
 import { StreamLanguage } from "@codemirror/language";
 import { verilog } from "@codemirror/legacy-modes/mode/verilog";
-import { searchKeymap } from "@codemirror/search";
 import { basicSetup } from "codemirror";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -82,10 +82,7 @@ function App() {
     const state = EditorState.create({
       doc: active.content,
       extensions: [
-        basicSetup, lineNumbers(), highlightActiveLineGutter(), highlightActiveLine(),
-        history(), indentOnInput(), bracketMatching(), languageFor(active.name),
-        EditorView.lineWrapping, saveKey,
-        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
+        basicSetup, languageFor(active.name), EditorView.lineWrapping, saveKey,
         EditorView.theme({
           "&": { height: "100%", backgroundColor: "#191a26", color: "#c0c1d2", fontSize: "14px" },
           ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "18px 0", caretColor: "#b7a0e5" },
@@ -154,7 +151,7 @@ function App() {
     return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
   }, []);
 
-  const startDrag = (e: React.MouseEvent) => { e.preventDefault(); dragRef.current = true; };
+  const startDrag = (e: ReactMouseEvent) => { e.preventDefault(); dragRef.current = true; };
   const closeDoc = (id: number) => {
     if (docs.find(d => d.id === id)?.dirty && !window.confirm("Discard unsaved changes?")) return;
     const next = docs.filter(d => d.id !== id);
