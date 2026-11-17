@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { EditorState, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { LanguageDescription } from "@codemirror/language";
+import { HighlightStyle, LanguageDescription, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import { languages } from "@codemirror/language-data";
 import { basicSetup } from "codemirror";
 import { invoke } from "@tauri-apps/api/core";
@@ -18,6 +19,23 @@ const base = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() || p;
 const languageFor = (name: string) =>
   LanguageDescription.matchFilename(languages, name) ??
   (/\\.vh$/i.test(name) ? languages.find(language => language.name === "Verilog") : undefined);
+
+const catppuccinHighlight = HighlightStyle.define([
+  { tag: tags.comment, color: "#6c7086", fontStyle: "italic" },
+  { tag: [tags.string, tags.docString, tags.character, tags.attributeValue], color: "#a6e3a1" },
+  { tag: [tags.number, tags.integer, tags.float, tags.bool], color: "#fab387" },
+  { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword, tags.operatorKeyword], color: "#cba6f7" },
+  { tag: [tags.typeName, tags.className, tags.namespace], color: "#f9e2af" },
+  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: "#89b4fa" },
+  { tag: [tags.variableName, tags.self, tags.special(tags.variableName)], color: "#cdd6f4" },
+  { tag: [tags.propertyName, tags.attributeName], color: "#89dceb" },
+  { tag: [tags.operator, tags.punctuation, tags.separator], color: "#94e2d5" },
+  { tag: [tags.tagName], color: "#f38ba8" },
+  { tag: [tags.regexp, tags.escape], color: "#f5c2e7" },
+  { tag: [tags.meta, tags.annotation], color: "#fab387" },
+  { tag: [tags.heading, tags.heading1, tags.heading2, tags.heading3], color: "#89b4fa", fontWeight: "bold" },
+  { tag: [tags.invalid], color: "#f38ba8", textDecoration: "underline wavy" }
+]);
 
 function App() {
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -122,18 +140,22 @@ function App() {
     const state = EditorState.create({
       doc: active.content,
       extensions: [
-        basicSetup, EditorView.lineWrapping,
+        basicSetup, EditorView.lineWrapping, syntaxHighlighting(catppuccinHighlight),
         EditorView.theme({
-          "&": { height: "100%", backgroundColor: "#191a26", color: "#c0c1d2", fontSize: fontSize + "px" },
-          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "10px 0", caretColor: "#b7a0e5" },
-          ".cm-gutters": { backgroundColor: "#191a26", color: "#666b85", border: "none", minWidth: "42px" },
-          ".cm-activeLineGutter": { backgroundColor: "#222438", color: "#c2b2e7" },
-          ".cm-activeLine": { backgroundColor: "#202235" },
-          ".cm-cursor": { borderLeftColor: "#b7a0e5" },
-          ".cm-selectionBackground, ::selection": { backgroundColor: "#45415f !important" },
-          ".cm-focused .cm-selectionBackground": { backgroundColor: "#45415f" },
-          ".cm-tooltip": { backgroundColor: "#252638", border: "1px solid #3b3b54" },
-          ".cm-panels": { backgroundColor: "#202235", color: "#c0c1d2" }
+          "&": { height: "100%", backgroundColor: "#1e1e2e", color: "#cdd6f4", fontSize: fontSize + "px" },
+          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "12px 0", caretColor: "#f5e0dc" },
+          ".cm-line": { paddingLeft: "4px" },
+          ".cm-gutters": { backgroundColor: "#181825", color: "#6c7086", border: "none", minWidth: "48px" },
+          ".cm-activeLineGutter": { backgroundColor: "#313244", color: "#b4befe" },
+          ".cm-activeLine": { backgroundColor: "#242438" },
+          ".cm-cursor": { borderLeftColor: "#f5e0dc" },
+          ".cm-selectionBackground, ::selection": { backgroundColor: "#45475a !important" },
+          ".cm-focused .cm-selectionBackground": { backgroundColor: "#45475a" },
+          ".cm-tooltip": { backgroundColor: "#313244", border: "1px solid #585b70", color: "#cdd6f4" },
+          ".cm-tooltip-autocomplete ul li[aria-selected]": { backgroundColor: "#45475a", color: "#cdd6f4" },
+          ".cm-panels": { backgroundColor: "#181825", color: "#cdd6f4" },
+          ".cm-searchMatch": { backgroundColor: "#f9e2af55", outline: "1px solid #f9e2af" },
+          ".cm-searchMatch-selected": { backgroundColor: "#f9e2af88" }
         }),
         EditorView.updateListener.of(update => {
           if (update.docChanged) patchDoc(activeId!, { content: update.state.doc.toString(), dirty: true });
@@ -163,7 +185,7 @@ function App() {
     if (!terminalHost.current || terminal.current) return;
     const term = new Terminal({
       cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize,
-      theme: { background: "#1f2130", foreground: "#c0c1d2", cursor: "#b7a0e5", selectionBackground: "#45415f", black: "#191a26", red: "#d88791", green: "#b1c384", yellow: "#cdb27e", blue: "#9ba9d5", magenta: "#b7a0e5", cyan: "#8db9b4", white: "#c0c1d2" }
+      theme: { background: "#11111b", foreground: "#cdd6f4", cursor: "#f5e0dc", cursorAccent: "#11111b", selectionBackground: "#45475a", black: "#181825", red: "#f38ba8", green: "#a6e3a1", yellow: "#f9e2af", blue: "#89b4fa", magenta: "#cba6f7", cyan: "#89dceb", white: "#bac2de", brightBlack: "#585b70", brightRed: "#f38ba8", brightGreen: "#a6e3a1", brightYellow: "#f9e2af", brightBlue: "#89b4fa", brightMagenta: "#cba6f7", brightCyan: "#89dceb", brightWhite: "#a6adc8" }
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
