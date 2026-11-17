@@ -57,8 +57,7 @@ Type=Application
 Name=Milize
 GenericName=Code Editor
 Comment=A lightweight code editor with an integrated terminal
-Exec="$APPIMAGE_DEST" %U
-TryExec="$APPIMAGE_DEST"
+Exec="$APPIMAGE_DEST"
 Icon=$ICON_DIR/milize.png
 Terminal=false
 StartupNotify=true
@@ -66,7 +65,6 @@ StartupWMClass=milize
 DBusActivatable=false
 Categories=Development;IDE;TextEditor;
 Keywords=code;editor;programming;development;terminal;
-MimeType=text/plain;
 EOF
 
 chmod 644 "$DESKTOP_DIR/milize.desktop"
