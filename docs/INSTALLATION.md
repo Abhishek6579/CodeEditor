@@ -11,12 +11,13 @@ cd milize
 The installer:
 
 1. Checks that the system is Arch Linux or an Arch-based distribution.
-2. Installs compiler, Node.js, Rust and Tauri system dependencies using pacman.
-3. Uses the current checkout (or clones the latest master branch into a temporary build directory when run remotely).
-4. Installs frontend dependencies and compiles Milize locally.
-5. Installs the executable, desktop entry, icon and license under `/usr/local`.
+2. Records which packages are already installed, then installs required runtime libraries and missing build tools with pacman.
+3. Clones the source into a temporary build directory (the caller's checkout is never modified).
+4. Installs frontend dependencies and compiles Milize inside that temporary directory.
+5. Installs only the executable, desktop entry, icon and license under `/usr/local`.
+6. Removes the temporary source, `node_modules` and Rust build output. It also attempts to remove build-only packages newly installed by this run, while preserving pre-existing packages and runtime libraries. Pacman will refuse removal if another installed package still requires a candidate.
 
-Run it as your normal user, not with sudo. The first build can take several minutes.
+Run it as your normal user, not with sudo. The first build can take several minutes. Build tools that were already installed before running the installer are intentionally left alone.
 
 ## One-command remote installation
 
@@ -38,7 +39,7 @@ Or remotely:
 curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/uninstall.sh | bash
 ~~~
 
-This removes installed Milize application files but deliberately leaves build dependencies installed.
+This removes installed Milize application files. Shared runtime libraries and pre-existing build tools are deliberately left installed because they may be used by other software.
 
 ## Arch package build
 
