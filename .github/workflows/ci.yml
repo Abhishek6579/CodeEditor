@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check Bash syntax
-        run: bash -n install.sh uninstall.sh scripts/install.sh scripts/uninstall.sh PKGBUILD
+        run: bash -n scripts/install.sh scripts/uninstall.sh PKGBUILD
 
   frontend:
     name: Frontend typecheck and build
