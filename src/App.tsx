@@ -28,7 +28,6 @@ function App() {
   const [root, setRoot] = useState<string | null>(null);
   const [tree, setTree] = useState<Record<string, Entry[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [terminalOpen, setTerminalOpen] = useState(true);
   const [terminalHeight, setTerminalHeight] = useState(210);
   const [terminalReady, setTerminalReady] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
@@ -159,7 +158,7 @@ function App() {
   }, [activeId, fontSize]);
 
   useEffect(() => {
-    if (!terminalOpen || !terminalHost.current || terminal.current) return;
+    if (!terminalHost.current || terminal.current) return;
     const term = new Terminal({
       cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize,
       theme: { background: "#1f2130", foreground: "#c0c1d2", cursor: "#b7a0e5", selectionBackground: "#45415f", black: "#191a26", red: "#d88791", green: "#b1c384", yellow: "#cdb27e", blue: "#9ba9d5", magenta: "#b7a0e5", cyan: "#8db9b4", white: "#c0c1d2" }
@@ -182,7 +181,7 @@ function App() {
       data.dispose(); void unlisten.then(fn => fn()); observer.disconnect(); term.dispose(); terminal.current = null;
       void invoke("terminal_close"); setTerminalReady(false);
     };
-  }, [terminalOpen]);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -192,7 +191,7 @@ function App() {
       else if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
       if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
       if (mod && e.key.toLowerCase() === "w") { e.preventDefault(); if (activeIdRef.current !== null) closeDoc(activeIdRef.current); }
-      if (mod && e.key === "`") { e.preventDefault(); setTerminalOpen(v => !v); }
+      if (mod && e.key === "`") { e.preventDefault(); terminal.current?.focus(); }
       if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setFontSize(v => Math.min(24, v + 1)); }
       if (mod && e.key === "-") { e.preventDefault(); setFontSize(v => Math.max(10, v - 1)); }
       if (mod && e.key === "0") { e.preventDefault(); setFontSize(14); }
@@ -243,13 +242,11 @@ function App() {
         <div className="editor-host" ref={editorHost}>
           {!active && <div className="empty-editor">Open a file or create a new one<br/><span>Ctrl+O · Ctrl+N</span></div>}
         </div>
-        {terminalOpen && <>
-          <div className="terminal-resize" onMouseDown={startDrag}><span/></div>
-          <section className="terminal-panel" style={{ height: terminalHeight }}>
-            <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
-            <div className="terminal-host" ref={terminalHost}/>
-          </section>
-        </>}
+        <div className="terminal-resize" onMouseDown={startDrag}><span/></div>
+        <section className="terminal-panel" style={{ height: terminalHeight }}>
+          <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
+          <div className="terminal-host" ref={terminalHost}/>
+        </section>
       </section>
     </div>
     <footer className="statusbar"><span>{status}</span><div><span>Ln {cursor.line}, Col {cursor.column}</span><span>UTF-8</span><span>{active?.name.split(".").pop()?.toUpperCase() ?? "TEXT"}</span></div></footer>
