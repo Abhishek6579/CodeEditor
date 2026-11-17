@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Code are documented here.
+All notable changes to Milize are documented here.
 
 ## [1.0.0] - 2026-11-17
 
@@ -16,6 +16,12 @@ All notable changes to Code are documented here.
 - Terminal startup configuration suppression for Fish, Bash and Zsh.
 - Debian and AppImage bundle targets.
 - Initial user, build, architecture and security documentation.
+
+### Release preparation
+- Standardized application, package, binary and Tauri identifiers as Milize.
+- Updated repository links and installation instructions for the renamed repository.
+- Grouped installer implementation under `scripts/` while preserving root-level entry points.
+- Added Arch Linux / CachyOS clone-and-run installation instructions.
 
 ### Notes
 - This is the initial 1.0.0 versioned release line. See the README for current limitations.

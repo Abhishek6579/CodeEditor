@@ -1,11 +1,11 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Code
+Name=Milize
 GenericName=Code Editor
-Comment=A minimal code editor with an integrated terminal
-Exec=code-editor
-Icon=code-editor
+Comment=A lightweight code editor with an integrated terminal
+Exec=milize
+Icon=milize
 Terminal=false
 StartupNotify=true
 Categories=Development;IDE;TextEditor;

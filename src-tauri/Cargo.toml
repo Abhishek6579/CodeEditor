@@ -1,12 +1,12 @@
 [package]
-name = "code-editor"
+name = "milize"
 version = "1.0.0"
-description = "A minimal Linux desktop code editor"
+description = "A lightweight code editor with an integrated terminal"
 authors = ["Abhishek Yadav"]
 edition = "2021"
 
 [lib]
-name = "code_editor_lib"
+name = "milize_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

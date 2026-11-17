@@ -1,3 +1,3 @@
 fn main() {
-    code_editor_lib::run();
+    milize_lib::run();
 }

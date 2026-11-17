@@ -124,5 +124,5 @@ pub fn run() {
         .manage(TerminalState::default())
         .invoke_handler(tauri::generate_handler![read_file, write_file, list_dir, start_terminal, terminal_change_directory, terminal_write, terminal_resize, terminal_close])
         .run(tauri::generate_context!())
-        .expect("error while running Code");
+        .expect("error while running Milize");
 }

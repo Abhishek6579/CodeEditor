@@ -1,6 +1,6 @@
-# Code
+# Milize
 
-**Code** is a minimal Linux desktop code editor focused on a clean workspace for systems programming and everyday source editing. It combines a file explorer, tabbed editor and integrated terminal in one compact window.
+**Milize** is a lightweight Linux desktop code editor focused on a clean workspace for systems programming and everyday source editing. It combines a file explorer, tabbed editor and integrated terminal in one compact window.
 
 ![Platform](https://img.shields.io/badge/platform-Linux-blue) ![Version](https://img.shields.io/badge/version-1.0.0-informational) ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -16,35 +16,49 @@
 
 ## Install on Arch Linux / CachyOS
 
-Run this single command in a terminal:
+Clone the repository and run the installer:
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/CodeEditor/master/install.sh | bash
-~~~
-
-The installer checks that the system is Arch-based, installs required build/runtime packages with pacman, clones the latest source, builds Code locally and installs the executable, icon and application-menu entry under /usr/local.
-
-The first installation compiles Rust and frontend dependencies and can take several minutes. Run it as your normal user; it requests sudo only for package and system-file installation. Do not run the script as root.
-
-To install from a repository clone instead:
-
-~~~bash
-git clone https://github.com/Abhishek6579/CodeEditor.git
-cd CodeEditor
+git clone https://github.com/Abhishek6579/milize.git
+cd milize
 ./install.sh
 ~~~
 
-To uninstall the application files:
+The installer checks that the system is Arch-based, installs required build/runtime packages with pacman, builds Milize locally and installs the executable, icon and application-menu entry under `/usr/local`.
+
+You can also run the installer directly without cloning:
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/CodeEditor/master/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/install.sh | bash
 ~~~
 
-The uninstaller removes the application binary, desktop entry, icon and license. It leaves build dependencies installed.
+Run it as your normal user; it requests sudo only when required. Do not run it as root. The first installation compiles Rust and frontend dependencies and can take several minutes.
+
+To uninstall:
+
+~~~bash
+./uninstall.sh
+~~~
+
+Or run the remote uninstaller:
+
+~~~bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/uninstall.sh | bash
+~~~
+
+The uninstaller removes Milize application files and leaves build dependencies installed.
+
+## Arch package
+
+An Arch `PKGBUILD` is provided at the repository root:
+
+~~~bash
+makepkg -si
+~~~
 
 ## Other Linux distributions
 
-Official .deb and AppImage downloads, when published, are available on the [GitHub Releases](https://github.com/Abhishek6579/CodeEditor/releases) page. The source installer above currently supports Arch Linux and Arch-based distributions only.
+Official .deb and AppImage downloads, when published, are available on the [GitHub Releases](https://github.com/Abhishek6579/milize/releases) page. The source installer currently supports Arch Linux and Arch-based distributions only.
 
 ## Build prerequisites
 
@@ -63,11 +77,11 @@ sudo apt install -y build-essential curl wget file libssl-dev libgtk-3-dev libay
 
 Install a current Node.js LTS release and Rust stable using their official installation instructions.
 
-## Run in development
+## Development
 
 ~~~bash
-git clone https://github.com/Abhishek6579/CodeEditor.git
-cd CodeEditor
+git clone https://github.com/Abhishek6579/milize.git
+cd milize
 npm install
 npm run tauri dev
 ~~~
@@ -81,8 +95,8 @@ npm run tauri build
 
 Generated bundles:
 
-- src-tauri/target/release/bundle/deb/
-- src-tauri/target/release/bundle/appimage/
+- `src-tauri/target/release/bundle/deb/`
+- `src-tauri/target/release/bundle/appimage/`
 
 ## Keyboard shortcuts
 
@@ -101,13 +115,13 @@ Generated bundles:
 
 ## Workspace and terminal behaviour
 
-Workspace metadata is stored locally by the application. On restart, Code attempts to reopen the last project, previously open files and their cursor positions. Files that no longer exist are skipped. **Unsaved editor contents are not a recovery feature**: save important changes with Ctrl+S.
+Workspace metadata is stored locally by the application. On restart, Milize attempts to reopen the last project, previously open files and their cursor positions. Files that no longer exist are skipped. **Unsaved editor contents are not a recovery feature**: save important changes with Ctrl+S.
 
 The integrated terminal starts without interactive shell startup files for Fish, Bash and Zsh to avoid startup banners and side effects. As a result, custom prompts, aliases and shell startup configuration are not loaded in that terminal. Your normal external terminal is unaffected.
 
 ## Scope and limitations
 
-Code is an editor, not a full IDE. The current release provides syntax highlighting but does not include:
+Milize is an editor, not a full IDE. The current release provides syntax highlighting but does not include:
 
 - Language Server Protocol (LSP), semantic completion or diagnostics.
 - Built-in debugger, compiler or build-system integration.
@@ -116,6 +130,22 @@ Code is an editor, not a full IDE. The current release provides syntax highlight
 - A settings/preferences interface.
 
 The integrated terminal is a regular shell and can run your existing compiler and development tools.
+
+## Project structure
+
+~~~text
+milize/
+├── .github/
+│   └── workflows/       # CI and release automation
+├── docs/                # Architecture and installation guides
+├── packaging/           # Desktop integration assets
+├── scripts/             # Installer and uninstaller implementation
+├── src/                 # React frontend
+├── src-tauri/           # Tauri and Rust backend
+├── install.sh           # User-facing installer entry point
+├── uninstall.sh         # User-facing uninstaller entry point
+└── PKGBUILD             # Arch package recipe
+~~~
 
 ## Documentation
 
@@ -136,4 +166,4 @@ The integrated terminal is a regular shell and can run your existing compiler an
 
 ## License
 
-Code is distributed under the [MIT License](LICENSE). Third-party dependencies remain under their respective licenses.
+Milize is distributed under the [MIT License](LICENSE). Third-party dependencies remain under their respective licenses.
