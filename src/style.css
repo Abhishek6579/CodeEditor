@@ -33,12 +33,15 @@ button {
 }
 
 .tabs {
-  height: 30px;
+  height: 38px;
   flex: none;
   display: flex;
   align-items: stretch;
+  margin: 8px 8px 0;
+  padding: 3px;
   background: #181825;
-  border-bottom: 1px solid #313244;
+  border: 1px solid #313244;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -52,12 +55,13 @@ button {
   gap: 8px;
   cursor: pointer;
   color: #a6adc8;
-  border-right: 1px solid #3c4253;
+  border-right: 0;
+  border-radius: 8px;
   font-size: 12px;
 }
 
 .tab.active {
-  background: #181825;
+  background: #313244;
   color: #cdd6f4;
 }
 
@@ -105,6 +109,8 @@ button {
   flex: 1;
   min-height: 0;
   display: flex;
+  gap: 8px;
+  padding: 8px;
 }
 
 .explorer {
@@ -114,7 +120,8 @@ button {
   display: flex;
   flex-direction: column;
   background: #181825;
-  border-right: 1px solid #313244;
+  border: 1px solid #313244;
+  border-radius: 12px;
   overflow: auto;
 }
 
@@ -173,12 +180,16 @@ button {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  gap: 7px;
 }
 .editor-host {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   position: relative;
+  background: #1e1e2e;
+  border: 1px solid #313244;
+  border-radius: 12px;
 }
 .cm-editor { height: 100%; }
 .cm-scroller { overflow: auto; }
@@ -205,15 +216,14 @@ button {
 }
 
 .terminal-resize {
-  height: 5px;
+  height: 8px;
   flex: none;
   cursor: row-resize;
   display: grid;
   place-items: center;
-  background: #181825;
-  border-top: 1px solid #313244;
+  background: transparent;
 }
-.terminal-resize:hover { background: #45475a; }
+.terminal-resize:hover { background: transparent; }
 .terminal-resize span {
   height: 2px;
   width: 34px;
@@ -226,7 +236,9 @@ button {
   display: flex;
   flex-direction: column;
   background: #11111b;
-  border-top: 1px solid #45475a;
+  border: 1px solid #313244;
+  border-radius: 12px;
+  overflow: hidden;
 }
 .terminal-heading {
   height: 25px;
@@ -250,13 +262,16 @@ button {
 .xterm-viewport { overflow-y: auto !important; }
 
 .statusbar {
-  height: 21px;
+  height: 25px;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 9px;
+  margin: 0 8px 8px;
+  padding: 0 10px;
   background: #181825;
+  border: 1px solid #313244;
+  border-radius: 8px;
   color: #b4befe;
   font-size: 10px;
 }
@@ -276,9 +291,20 @@ button:focus-visible { outline: 1px solid #b4befe; outline-offset: -2px; }
 .sidebar-toggle { color: #b4befe; }
 .sidebar-toggle:hover { background: #313244; color: #cba6f7; }
 .tree-entry:hover { background: #242438; }
-.terminal-resize { background: #181825; border-top-color: #313244; }
-.terminal-resize:hover { background: #313244; }
+.terminal-resize { background: transparent; border-top: 0; }
+.terminal-resize:hover span { background: #b4befe; }
 .terminal-resize span { background: #585b70; }
-.terminal-panel { background: #11111b; border-top-color: #313244; }
+.terminal-panel { background: #11111b; border-color: #313244; }
 .terminal-heading { color: #cba6f7; border-bottom-color: #313244; }
 .statusbar { background: #181825; color: #b4befe; }
+
+/* Rounded, separated workspace surfaces */
+.tabs { box-shadow: 0 4px 14px #11111b33; }
+.explorer, .editor-host, .terminal-panel {
+  box-shadow: 0 5px 18px #11111b30;
+}
+.explorer-root { border-radius: 9px; margin: 4px 5px 3px; }
+.tree-entry { border-radius: 5px; width: calc(100% - 8px); margin: 0 4px; }
+.terminal-heading { background: #181825; }
+.terminal-resize span { transition: background-color 120ms ease, width 120ms ease; }
+.terminal-resize:hover span { width: 48px; background: #b4befe; }
