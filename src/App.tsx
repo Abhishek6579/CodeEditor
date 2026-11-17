@@ -115,7 +115,7 @@ function App() {
     if (doc?.dirty && !window.confirm("Discard unsaved changes?")) return;
     const remaining = docsRef.current.filter(d => d.id !== id);
     setDocs(remaining);
-    if (activeIdRef.current === id) setActiveId(remaining.at(-1)?.id ?? null);
+    if (activeIdRef.current === id) setActiveId((remaining.length ? remaining[remaining.length - 1].id : null));
   };
 
   useEffect(() => {
@@ -225,7 +225,7 @@ function App() {
         <span className="tab-name">{doc.name}</span>{doc.dirty && <i className="dirty"/>}
         <button className="tab-close" title="Close tab" onClick={e => { e.stopPropagation(); closeDoc(doc.id); }}>×</button>
       </div>)}
-      <div className="tabs-fill"/>
+      <div className="tabs-fill" data-tauri-drag-region/>
     </div>
     <div className="workspace">
       <aside className="explorer">
