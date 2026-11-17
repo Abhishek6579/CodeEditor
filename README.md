@@ -46,7 +46,7 @@ chmod +x Milize_*.AppImage
 Launching a portable AppImage does **not** reliably create an application-menu entry. To install it into your user account and register Milize in the desktop application launcher (including KDE Plasma's application menu), run:
 
 ~~~bash
-./scripts/integrate-appimage.sh ./Milize_1.0.2_amd64.AppImage
+bash scripts/integrate-appimage.sh ./Milize_1.0.2_amd64.AppImage
 ~~~
 
 The integration script copies the AppImage to `~/.local/opt/milize/`, extracts its bundled desktop metadata and icon, and creates a launcher under `~/.local/share/applications/`. It does not require root. Keep the installed AppImage at that location; the launcher points to it.
