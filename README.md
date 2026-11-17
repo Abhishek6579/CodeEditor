@@ -13,39 +13,45 @@
 - **Workspace restoration** remembers the last project folder, open files, active file and cursor positions.
 - **Independent editor and terminal zoom**.
 - **Catppuccin Mocha** colour scheme.
-- **Linux packages** generated as Debian packages and AppImages, plus a source-build recipe for Arch Linux.
 
-## Download
+## Install on Arch Linux / CachyOS
 
-Open the [GitHub Releases](https://github.com/Abhishek6579/CodeEditor/releases) page.
+Run this single command in a terminal:
 
-| Download | Intended systems | Notes |
-| --- | --- | --- |
-| AppImage | Most mainstream Linux distributions | Portable x86_64 build; WebKitGTK/GTK runtime compatibility may still be required |
-| Debian package | Debian, Ubuntu and derivatives | Installs using the system package manager |
-| Arch PKGBUILD | Arch Linux, CachyOS and derivatives | Build and install locally with makepkg -si |
+~~~bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/CodeEditor/master/install.sh | bash
+~~~
 
-### Arch Linux / CachyOS
+The installer checks that the system is Arch-based, installs required build/runtime packages with pacman, clones the latest source, builds Code locally and installs the executable, icon and application-menu entry under /usr/local.
 
-Clone the repository, check out the release tag, then build and install the native package:
+The first installation compiles Rust and frontend dependencies and can take several minutes. Run it as your normal user; it requests sudo only for package and system-file installation. Do not run the script as root.
+
+To install from a repository clone instead:
 
 ~~~bash
 git clone https://github.com/Abhishek6579/CodeEditor.git
 cd CodeEditor
-git checkout v1.0.0
-makepkg -si
+./install.sh
 ~~~
 
-The PKGBUILD compiles the application against libraries installed on your system. This is the recommended route for Arch-based systems; it does not depend on an AppImage compatibility layer.
+To uninstall the application files:
 
-Do not run unverified binaries from unofficial sources. Check the SHA-256 checksums published with each GitHub release.
+~~~bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/CodeEditor/master/uninstall.sh | bash
+~~~
+
+The uninstaller removes the application binary, desktop entry, icon and license. It leaves build dependencies installed.
+
+## Other Linux distributions
+
+Official .deb and AppImage downloads, when published, are available on the [GitHub Releases](https://github.com/Abhishek6579/CodeEditor/releases) page. The source installer above currently supports Arch Linux and Arch-based distributions only.
 
 ## Build prerequisites
 
 ### Arch Linux / CachyOS
 
 ~~~bash
-sudo pacman -S --needed base-devel git curl wget file openssl gtk3 libayatana-appindicator librsvg webkit2gtk-4.1 nodejs npm rust
+sudo pacman -S --needed base-devel git curl file openssl gtk3 libayatana-appindicator librsvg webkit2gtk-4.1 nodejs npm rust
 ~~~
 
 ### Ubuntu / Debian
