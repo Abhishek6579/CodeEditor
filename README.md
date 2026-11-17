@@ -21,7 +21,7 @@ Clone the repository and run the installer:
 ~~~bash
 git clone https://github.com/Abhishek6579/milize.git
 cd milize
-./install.sh
+./scripts/install.sh
 ~~~
 
 The installer checks that the system is Arch-based, installs required build/runtime packages with pacman, builds Milize locally and installs the executable, icon and application-menu entry under `/usr/local`.
@@ -29,7 +29,7 @@ The installer checks that the system is Arch-based, installs required build/runt
 You can also run the installer directly without cloning:
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/install.sh | bash
 ~~~
 
 Run it as your normal user; it requests sudo only when required. Do not run it as root. The first installation compiles Rust and frontend dependencies and can take several minutes.
@@ -37,13 +37,13 @@ Run it as your normal user; it requests sudo only when required. Do not run it a
 To uninstall:
 
 ~~~bash
-./uninstall.sh
+./scripts/uninstall.sh
 ~~~
 
 Or run the remote uninstaller:
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/uninstall.sh | bash
 ~~~
 
 The uninstaller removes Milize application files and leaves build dependencies installed.
@@ -139,11 +139,9 @@ milize/
 │   └── workflows/       # CI and release automation
 ├── docs/                # Architecture and installation guides
 ├── packaging/           # Desktop integration assets
-├── scripts/             # Installer and uninstaller implementation
+├── scripts/             # Installer and uninstaller
 ├── src/                 # React frontend
 ├── src-tauri/           # Tauri and Rust backend
-├── install.sh           # User-facing installer entry point
-├── uninstall.sh         # User-facing uninstaller entry point
 └── PKGBUILD             # Arch package recipe
 ~~~
 
