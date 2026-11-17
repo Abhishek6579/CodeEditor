@@ -264,7 +264,7 @@ function App() {
         <span className="tree-arrow">{entry.is_dir ? (expanded.has(entry.path) ? <ChevronDown size={12} /> : <ChevronRight size={12} />) : null}</span>
         <span className="tree-icon">
           {entry.is_dir
-            ? (expanded.has(entry.path) ? <FolderOpen size={15} color="#f9c96b" /> : <Folder size={15} color="#e5a84b" />)
+            ? (expanded.has(entry.path) ? <FolderOpen size={15} color="#89b4fa" /> : <Folder size={15} color="#89b4fa" />)
             : (() => { const { Icon, color } = fileIconFor(entry.name); return <Icon size={14} color={color} strokeWidth={1.8} />; })()}
         </span>
         <span className="tree-name">{entry.name}</span>
@@ -290,7 +290,7 @@ function App() {
       {sidebarVisible && <>
         <aside className="explorer" style={{ width: sidebarWidth }}>
           <div className="explorer-root" title={root ?? "Open a folder"} onClick={() => void openFolder()}>
-            <span className="tree-icon">{root ? <FolderOpen size={15} color="#f9c96b" /> : <Folder size={15} color="#e5a84b" />}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
+            <span className="tree-icon">{root ? <FolderOpen size={15} color="#89b4fa" /> : <Folder size={15} color="#89b4fa" />}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
           </div>
           {root && tree[root] ? <div className="tree-list">{renderTree(tree[root])}</div> : <div className="empty-tree">Ctrl+Shift+O<br/>to open a folder</div>}
         </aside>
