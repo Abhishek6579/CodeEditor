@@ -188,7 +188,8 @@ function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); setSidebarVisible(v => !v); }\n      if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeIdRef.current); if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content }); }
+      if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); setSidebarVisible(v => !v); }
+      if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeIdRef.current); if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content }); }
       if (mod && e.key.toLowerCase() === "o" && e.shiftKey) { e.preventDefault(); void openFolder(); }
       else if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
       if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
@@ -203,7 +204,8 @@ function App() {
   }, [openFile, openFolder]);
 
   useEffect(() => {
-    const move = (e: MouseEvent) => { if (drag.current === "terminal") setTerminalHeight(Math.max(100, Math.min(window.innerHeight - 170, window.innerHeight - e.clientY - 22)));\n      if (drag.current === "sidebar") setSidebarWidth(Math.max(160, Math.min(420, e.clientX))); };
+    const move = (e: MouseEvent) => { if (drag.current === "terminal") setTerminalHeight(Math.max(100, Math.min(window.innerHeight - 170, window.innerHeight - e.clientY - 22)));
+      if (drag.current === "sidebar") setSidebarWidth(Math.max(160, Math.min(420, e.clientX))); };
     const up = () => { drag.current = false; };
     window.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
     return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
@@ -219,7 +221,8 @@ function App() {
     </div>
   );
 
-  const startTerminalDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "terminal"; };\n  const startSidebarDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "sidebar"; };
+  const startTerminalDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "terminal"; };
+  const startSidebarDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "sidebar"; };
 
   return <main className="app-shell">
     <div className="tabs">
@@ -228,7 +231,8 @@ function App() {
         <span className="tab-name">{doc.name}</span>{doc.dirty && <i className="dirty"/>}
         <button className="tab-close" title="Close tab" onClick={e => { e.stopPropagation(); closeDoc(doc.id); }}>×</button>
       </div>)}
-      <div className="tabs-fill" data-tauri-drag-region/>\n      <button className="sidebar-toggle" title={sidebarVisible ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"} onClick={() => setSidebarVisible(v => !v)}>{sidebarVisible ? <PanelLeftClose size={15}/> : <PanelLeftOpen size={15}/>}</button>
+      <div className="tabs-fill" data-tauri-drag-region/>
+      <button className="sidebar-toggle" title={sidebarVisible ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"} onClick={() => setSidebarVisible(v => !v)}>{sidebarVisible ? <PanelLeftClose size={15}/> : <PanelLeftOpen size={15}/>}</button>
     </div>
     <div className="workspace">
       <aside className="explorer">
