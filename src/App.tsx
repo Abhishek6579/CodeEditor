@@ -11,6 +11,7 @@ import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
+import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
 type Entry = { name: string; path: string; is_dir: boolean };
@@ -29,6 +30,8 @@ function App() {
   const [tree, setTree] = useState<Record<string, Entry[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [terminalHeight, setTerminalHeight] = useState(210);
+  const [sidebarWidth, setSidebarWidth] = useState(246);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   const [terminalReady, setTerminalReady] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
   const [fontSize, setFontSize] = useState(14);
@@ -37,7 +40,7 @@ function App() {
   const editor = useRef<EditorView | null>(null);
   const terminalHost = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
-  const drag = useRef(false);
+  const drag = useRef<"terminal" | "sidebar" | false>(false);
   const docsRef = useRef(docs);
   const activeIdRef = useRef(activeId);
   const saveRef = useRef<(d: Doc) => Promise<void>>(async () => {});
@@ -185,7 +188,7 @@ function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeIdRef.current); if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content }); }
+      if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); setSidebarVisible(v => !v); }\n      if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeIdRef.current); if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content }); }
       if (mod && e.key.toLowerCase() === "o" && e.shiftKey) { e.preventDefault(); void openFolder(); }
       else if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
       if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
@@ -200,7 +203,7 @@ function App() {
   }, [openFile, openFolder]);
 
   useEffect(() => {
-    const move = (e: MouseEvent) => { if (drag.current) setTerminalHeight(Math.max(100, Math.min(window.innerHeight - 170, window.innerHeight - e.clientY - 22))); };
+    const move = (e: MouseEvent) => { if (drag.current === "terminal") setTerminalHeight(Math.max(100, Math.min(window.innerHeight - 170, window.innerHeight - e.clientY - 22)));\n      if (drag.current === "sidebar") setSidebarWidth(Math.max(160, Math.min(420, e.clientX))); };
     const up = () => { drag.current = false; };
     window.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
     return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
@@ -216,7 +219,7 @@ function App() {
     </div>
   );
 
-  const startDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = true; };
+  const startTerminalDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "terminal"; };\n  const startSidebarDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "sidebar"; };
 
   return <main className="app-shell">
     <div className="tabs">
@@ -225,7 +228,7 @@ function App() {
         <span className="tab-name">{doc.name}</span>{doc.dirty && <i className="dirty"/>}
         <button className="tab-close" title="Close tab" onClick={e => { e.stopPropagation(); closeDoc(doc.id); }}>×</button>
       </div>)}
-      <div className="tabs-fill" data-tauri-drag-region/>
+      <div className="tabs-fill" data-tauri-drag-region/>\n      <button className="sidebar-toggle" title={sidebarVisible ? "Hide sidebar (Ctrl+B)" : "Show sidebar (Ctrl+B)"} onClick={() => setSidebarVisible(v => !v)}>{sidebarVisible ? <PanelLeftClose size={15}/> : <PanelLeftOpen size={15}/>}</button>
     </div>
     <div className="workspace">
       <aside className="explorer">
@@ -238,7 +241,7 @@ function App() {
         <div className="editor-host" ref={editorHost}>
           {!active && <div className="empty-editor">Open a file or create a new one<br/><span>Ctrl+O · Ctrl+N</span></div>}
         </div>
-        <div className="terminal-resize" onMouseDown={startDrag}><span/></div>
+        <div className="terminal-resize" onMouseDown={startTerminalDrag}><span/></div>
         <section className="terminal-panel" style={{ height: terminalHeight }}>
           <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
           <div className="terminal-host" ref={terminalHost}/>
