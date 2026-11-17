@@ -7,7 +7,7 @@ All notable changes to Milize are documented here.
 ### Added
 - Minimal Linux desktop editor built with Tauri, React and CodeMirror.
 - Tabbed files, project explorer and integrated PTY terminal.
-- Syntax highlighting through CodeMirror language packages.
+- Syntax highlighting through CodeMirror language packages, with distinct colours for functions, declarations, constants, types and properties.
 - Catppuccin Mocha editor and terminal theme.
 - Lucide file and folder icons with extension-specific colours.
 - Resizable and hideable project explorer.
@@ -20,7 +20,7 @@ All notable changes to Milize are documented here.
 ### Release preparation
 - Standardized application, package, binary and Tauri identifiers as Milize.
 - Updated repository links and installation instructions for the renamed repository.
-- Grouped installer implementation under `scripts/` while preserving root-level entry points.
+- Consolidated installer and uninstaller scripts under `scripts/` and aligned all documentation and CI checks.
 - Added Arch Linux / CachyOS clone-and-run installation instructions.
 
 ### Notes
