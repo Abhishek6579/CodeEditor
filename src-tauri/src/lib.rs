@@ -45,12 +45,22 @@ fn list_dir(path: String) -> Result<Vec<DirectoryEntry>, String> {
 }
 
 #[tauri::command]
-fn start_terminal(app: AppHandle, state: State<'_, TerminalState>) -> Result<(), String> {
+fn start_terminal(app: AppHandle, state: State<'_, TerminalState>, cwd: Option<String>) -> Result<(), String> {
     let mut slot = state.0.lock().map_err(|e| e.to_string())?;
     if slot.is_some() { return Ok(()); }
     let pair = native_pty_system().openpty(PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 }).map_err(|e| e.to_string())?;
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
-    let mut cmd = CommandBuilder::new(shell);
+    let mut cmd = CommandBuilder::new(&shell);
+    if let Some(path) = cwd.filter(|path| std::path::Path::new(path).is_dir()) {
+        cmd.cwd(path);
+    }
+    let shell_name = std::path::Path::new(&shell).file_name().and_then(|name| name.to_str()).unwrap_or("");
+    match shell_name {
+        "fish" => { cmd.arg("--no-config"); }
+        "bash" => { cmd.arg("--noprofile"); cmd.arg("--norc"); }
+        "zsh" => { cmd.arg("--no-rcs"); }
+        _ => {}
+    }
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
     let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
@@ -74,6 +84,17 @@ fn start_terminal(app: AppHandle, state: State<'_, TerminalState>) -> Result<(),
     });
     Ok(())
 }
+#[tauri::command]
+fn terminal_change_directory(path: String, state: State<'_, TerminalState>) -> Result<(), String> {
+    if !std::path::Path::new(&path).is_dir() {
+        return Err(format!("Not a directory: {path}"));
+    }
+    let mut slot = state.0.lock().map_err(|e| e.to_string())?;
+    let session = slot.as_mut().ok_or("Terminal is not running")?;
+    session.writer.write_all(format!("cd '{}'\n", path.replace('\'', "'\\''")).as_bytes()).map_err(|e| e.to_string())?;
+    session.writer.flush().map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn terminal_write(data: String, state: State<'_, TerminalState>) -> Result<(), String> {
     let mut slot = state.0.lock().map_err(|e| e.to_string())?;
@@ -101,7 +122,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(TerminalState::default())
-        .invoke_handler(tauri::generate_handler![read_file, write_file, list_dir, start_terminal, terminal_write, terminal_resize, terminal_close])
+        .invoke_handler(tauri::generate_handler![read_file, write_file, list_dir, start_terminal, terminal_change_directory, terminal_write, terminal_resize, terminal_close])
         .run(tauri::generate_context!())
         .expect("error while running Code");
 }
