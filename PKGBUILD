@@ -1,6 +1,6 @@
 # Maintainer: Abhishek Yadav <83967453+Abhishek6579@users.noreply.github.com>
 pkgname=milize
-pkgver=1.0.0
+pkgver=1.0.2
 pkgrel=1
 pkgdesc="A lightweight code editor with an integrated terminal"
 arch=('x86_64')
