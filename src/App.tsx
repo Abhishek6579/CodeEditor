@@ -2,96 +2,138 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-
-
-import { cpp } from "@codemirror/lang-cpp";
 import { StreamLanguage } from "@codemirror/language";
 import { verilog } from "@codemirror/legacy-modes/mode/verilog";
+import { cpp } from "@codemirror/lang-cpp";
 import { basicSetup } from "codemirror";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { Activity, ChevronDown, ChevronRight, Code2, FileCode2, FilePlus2, FolderOpen, PanelBottom, PanelLeft, Save, Search, Settings2, X } from "lucide-react";
 
-type Document = { id: number; path: string | null; name: string; content: string; dirty: boolean };
-const languageFor = (name: string) => {
+type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
+type Entry = { name: string; path: string; is_dir: boolean };
+const base = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() || p;
+const modeFor = (name: string) => {
   const ext = name.split(".").pop()?.toLowerCase();
-  if (["v", "vh", "sv", "svh"].includes(ext ?? "")) return StreamLanguage.define(verilog);
-  if (["c", "h", "cc", "cpp", "cxx", "hpp", "hh"].includes(ext ?? "")) return cpp();
+  if (["v", "vh", "sv", "svh"].includes(ext || "")) return StreamLanguage.define(verilog);
+  if (["c", "h", "cc", "cpp", "cxx", "hpp", "hh"].includes(ext || "")) return cpp();
   return [];
 };
-const basename = (path: string) => path.split(/[\\/]/).pop() || path;
 
 function App() {
-  const [docs, setDocs] = useState<Document[]>([{ id: 1, path: null, name: "untitled.sv", content: "", dirty: false }]);
-  const [activeId, setActiveId] = useState(1);
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [root, setRoot] = useState<string | null>(null);
+  const [tree, setTree] = useState<Record<string, Entry[]>>({});
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [terminalOpen, setTerminalOpen] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [terminalHeight, setTerminalHeight] = useState(210);
   const [terminalReady, setTerminalReady] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
+  const [fontSize, setFontSize] = useState(14);
   const [status, setStatus] = useState("Ready");
-  const [terminalHeight, setTerminalHeight] = useState(230);
   const editorHost = useRef<HTMLDivElement>(null);
-  const editorView = useRef<EditorView | null>(null);
+  const editor = useRef<EditorView | null>(null);
   const terminalHost = useRef<HTMLDivElement>(null);
-  const terminalRef = useRef<Terminal | null>(null);
-  const fitRef = useRef<FitAddon | null>(null);
-  const dragRef = useRef(false);
-  const active = docs.find(d => d.id === activeId) ?? docs[0];
+  const terminal = useRef<Terminal | null>(null);
+  const drag = useRef(false);
   const docsRef = useRef(docs);
-  const saveDocRef = useRef<(doc: Document) => Promise<void>>(async () => {});
+  const activeIdRef = useRef(activeId);
+  const saveRef = useRef<(d: Doc) => Promise<void>>(async () => {});
   docsRef.current = docs;
+  activeIdRef.current = activeId;
+  const active = docs.find(d => d.id === activeId) ?? null;
 
-  const updateDoc = useCallback((id: number, patch: Partial<Document>) => {
-    setDocs(prev => prev.map(d => d.id === id ? { ...d, ...patch } : d));
+  const patchDoc = useCallback((id: number, patch: Partial<Doc>) => {
+    setDocs(old => old.map(d => d.id === id ? { ...d, ...patch } : d));
   }, []);
 
-  const saveDoc = useCallback(async (doc: Document) => {
+  const saveDoc = useCallback(async (doc: Doc) => {
     try {
       let path = doc.path;
       if (!path) {
-        const chosen = await save({ defaultPath: doc.name, filters: [{ name: "Source files", extensions: ["v","vh","sv","svh","c","h","cpp","hpp","txt"] }] });
+        const chosen = await save({ defaultPath: doc.name });
         if (!chosen) return;
         path = chosen;
       }
       await invoke("write_file", { path, content: doc.content });
-      updateDoc(doc.id, { path, name: basename(path), dirty: false });
-      setStatus("Saved " + basename(path));
-    } catch (e) { setStatus("Save failed: " + String(e)); }
-  }, [updateDoc]);
+      patchDoc(doc.id, { path, name: base(path), dirty: false });
+      setStatus("Saved");
+    } catch (error) { setStatus("Save failed: " + String(error)); }
+  }, [patchDoc]);
+  saveRef.current = saveDoc;
 
-  saveDocRef.current = saveDoc;
+  const openPath = useCallback(async (path: string) => {
+    const existing = docsRef.current.find(d => d.path === path);
+    if (existing) { setActiveId(existing.id); return; }
+    try {
+      const content = await invoke<string>("read_file", { path });
+      const doc = { id: Date.now() + Math.random(), path, name: base(path), content, dirty: false };
+      setDocs(old => [...old, doc]);
+      setActiveId(doc.id);
+      setStatus("Opened " + doc.name);
+    } catch (error) { setStatus("Open failed: " + String(error)); }
+  }, []);
 
   const openFile = useCallback(async () => {
+    const selected = await open({ multiple: false });
+    if (typeof selected === "string") await openPath(selected);
+  }, [openPath]);
+
+  const loadDirectory = useCallback(async (path: string) => {
     try {
-      const selected = await open({ multiple: false, filters: [{ name: "Source files", extensions: ["v","vh","sv","svh","c","h","cpp","hpp","cc","txt","md","json","toml","rs"] }] });
-      if (!selected || Array.isArray(selected)) return;
-      const existing = docs.find(d => d.path === selected);
-      if (existing) { setActiveId(existing.id); return; }
-      const content = await invoke<string>("read_file", { path: selected });
-      const doc = { id: Date.now(), path: selected, name: basename(selected), content, dirty: false };
-      setDocs(prev => [...prev, doc]); setActiveId(doc.id); setStatus("Opened " + doc.name);
-    } catch (e) { setStatus("Open failed: " + String(e)); }
-  }, [docs]);
+      const entries = await invoke<Entry[]>("list_dir", { path });
+      setTree(old => ({ ...old, [path]: entries }));
+    } catch (error) { setStatus("Directory error: " + String(error)); }
+  }, []);
+
+  const openFolder = useCallback(async () => {
+    const selected = await open({ directory: true, multiple: false });
+    if (typeof selected !== "string") return;
+    setRoot(selected);
+    setExpanded(new Set([selected]));
+    await loadDirectory(selected);
+    setStatus("Opened folder " + base(selected));
+  }, [loadDirectory]);
+
+  const toggleDirectory = async (path: string) => {
+    const next = new Set(expanded);
+    if (next.has(path)) next.delete(path);
+    else { next.add(path); if (!tree[path]) await loadDirectory(path); }
+    setExpanded(next);
+  };
 
   const newFile = () => {
-    const doc = { id: Date.now(), path: null, name: "untitled.sv", content: "", dirty: false };
-    setDocs(prev => [...prev, doc]); setActiveId(doc.id);
+    const doc = { id: Date.now() + Math.random(), path: null, name: "untitled.sv", content: "", dirty: false };
+    setDocs(old => [...old, doc]);
+    setActiveId(doc.id);
+  };
+
+  const closeDoc = (id: number) => {
+    const doc = docsRef.current.find(d => d.id === id);
+    if (doc?.dirty && !window.confirm("Discard unsaved changes?")) return;
+    const remaining = docsRef.current.filter(d => d.id !== id);
+    setDocs(remaining);
+    if (activeIdRef.current === id) setActiveId(remaining.at(-1)?.id ?? null);
   };
 
   useEffect(() => {
-    if (!editorHost.current) return;
-    const saveKey = keymap.of([{ key: "Mod-s", run: () => { const d = docsRef.current.find(x => x.id === activeId); if (d) void saveDocRef.current({ ...d, content: editorView.current?.state.doc.toString() ?? d.content }); return true; } }]);
+    if (!editorHost.current || !active) { editor.current?.destroy(); editor.current = null; return; }
+    const saveKey = keymap.of([{ key: "Mod-s", run: () => {
+      const d = docsRef.current.find(x => x.id === activeId);
+      if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content });
+      return true;
+    }}]);
     const state = EditorState.create({
       doc: active.content,
       extensions: [
-        basicSetup, languageFor(active.name), EditorView.lineWrapping, saveKey,
+        basicSetup, modeFor(active.name), EditorView.lineWrapping, saveKey,
         EditorView.theme({
-          "&": { height: "100%", backgroundColor: "#191a26", color: "#c0c1d2", fontSize: "14px" },
-          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "18px 0", caretColor: "#b7a0e5" },
-          ".cm-gutters": { backgroundColor: "#191a26", color: "#666b85", border: "none", minWidth: "54px" },
+          "&": { height: "100%", backgroundColor: "#191a26", color: "#c0c1d2", fontSize: fontSize + "px" },
+          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "10px 0", caretColor: "#b7a0e5" },
+          ".cm-gutters": { backgroundColor: "#191a26", color: "#666b85", border: "none", minWidth: "42px" },
           ".cm-activeLineGutter": { backgroundColor: "#222438", color: "#c2b2e7" },
           ".cm-activeLine": { backgroundColor: "#202235" },
           ".cm-cursor": { borderLeftColor: "#b7a0e5" },
@@ -101,106 +143,116 @@ function App() {
           ".cm-panels": { backgroundColor: "#202235", color: "#c0c1d2" }
         }),
         EditorView.updateListener.of(update => {
-          if (update.docChanged) updateDoc(activeId, { content: update.state.doc.toString(), dirty: true });
+          if (update.docChanged) patchDoc(activeId!, { content: update.state.doc.toString(), dirty: true });
           if (update.selectionSet) {
             const pos = update.state.selection.main.head;
             const line = update.state.doc.lineAt(pos);
             setCursor({ line: line.number, column: pos - line.from + 1 });
           }
-        }),
-      ],
+        })
+      ]
     });
-    editorView.current = new EditorView({ state, parent: editorHost.current });
-    return () => { editorView.current?.destroy(); editorView.current = null; };
-  // Recreate only when switching documents; edits are persisted by update listener.
+    editor.current = new EditorView({ state, parent: editorHost.current });
+    return () => { editor.current?.destroy(); editor.current = null; };
+  // A fresh CodeMirror state is created when switching tabs or changing editor zoom.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId]);
+  }, [activeId, fontSize]);
 
   useEffect(() => {
-    const view = editorView.current;
-    if (view && view.state.doc.toString() !== active.content) {
-      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: active.content } });
-    }
-  }, [active.content, activeId]);
-
-  useEffect(() => {
-    if (!terminalOpen || !terminalHost.current || terminalRef.current) return;
+    if (!terminalOpen || !terminalHost.current || terminal.current) return;
     const term = new Terminal({
-      cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace",
-      fontSize: 13, theme: { background: "#1f2130", foreground: "#c0c1d2", cursor: "#b7a0e5", selectionBackground: "#45415f", black: "#191a26", red: "#d88791", green: "#b1c384", yellow: "#cdb27e", blue: "#9ba9d5", magenta: "#b7a0e5", cyan: "#8db9b4", white: "#c0c1d2" },
+      cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize,
+      theme: { background: "#1f2130", foreground: "#c0c1d2", cursor: "#b7a0e5", selectionBackground: "#45415f", black: "#191a26", red: "#d88791", green: "#b1c384", yellow: "#cdb27e", blue: "#9ba9d5", magenta: "#b7a0e5", cyan: "#8db9b4", white: "#c0c1d2" }
     });
-    const fit = new FitAddon(); term.loadAddon(fit); term.open(terminalHost.current); term.write("\r\n  Code terminal · CachyOS\r\n");
-    terminalRef.current = term; fitRef.current = fit;
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    term.open(terminalHost.current);
+    terminal.current = term;
     const data = term.onData(value => { void invoke("terminal_write", { data: value }).catch(e => setStatus(String(e))); });
     const unlisten = listen<string>("terminal-output", event => term.write(event.payload));
-    const ro = new ResizeObserver(() => { try { fit.fit(); const dims = fit.proposeDimensions(); if (dims) void invoke("terminal_resize", { cols: dims.cols, rows: dims.rows }); } catch {} });
-    ro.observe(terminalHost.current);
-    void invoke("start_terminal").then(() => { setTerminalReady(true); setTimeout(() => { try { fit.fit(); const d = fit.proposeDimensions(); if (d) void invoke("terminal_resize", { cols: d.cols, rows: d.rows }); } catch {} }, 80); }).catch(e => setStatus("Terminal failed: " + String(e)));
-    return () => { data.dispose(); void unlisten.then(fn => fn()); ro.disconnect(); term.dispose(); terminalRef.current = null; fitRef.current = null; void invoke("terminal_close"); setTerminalReady(false); };
+    const observer = new ResizeObserver(() => {
+      try { fit.fit(); const size = fit.proposeDimensions(); if (size) void invoke("terminal_resize", { cols: size.cols, rows: size.rows }); } catch {}
+    });
+    observer.observe(terminalHost.current);
+    void invoke("start_terminal").then(() => {
+      setTerminalReady(true);
+      requestAnimationFrame(() => { try { fit.fit(); const size = fit.proposeDimensions(); if (size) void invoke("terminal_resize", { cols: size.cols, rows: size.rows }); } catch {} });
+    }).catch(e => setStatus("Terminal failed: " + String(e)));
+    return () => {
+      data.dispose(); void unlisten.then(fn => fn()); observer.disconnect(); term.dispose(); terminal.current = null;
+      void invoke("terminal_close"); setTerminalReady(false);
+    };
   }, [terminalOpen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeId); if (d) void saveDocRef.current({ ...d, content: editorView.current?.state.doc.toString() ?? d.content }); }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === "`") { e.preventDefault(); setTerminalOpen(v => !v); }
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeIdRef.current); if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content }); }
+      if (mod && e.key.toLowerCase() === "o" && e.shiftKey) { e.preventDefault(); void openFolder(); }
+      else if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
+      if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
+      if (mod && e.key.toLowerCase() === "w") { e.preventDefault(); if (activeIdRef.current !== null) closeDoc(activeIdRef.current); }
+      if (mod && e.key === "`") { e.preventDefault(); setTerminalOpen(v => !v); }
+      if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setFontSize(v => Math.min(24, v + 1)); }
+      if (mod && e.key === "-") { e.preventDefault(); setFontSize(v => Math.max(10, v - 1)); }
+      if (mod && e.key === "0") { e.preventDefault(); setFontSize(14); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openFile, activeId]);
+  }, [openFile, openFolder]);
 
   useEffect(() => {
-    const move = (e: MouseEvent) => { if (dragRef.current) setTerminalHeight(Math.max(120, Math.min(window.innerHeight - 250, window.innerHeight - e.clientY - 32))); };
-    const up = () => { dragRef.current = false; };
+    const move = (e: MouseEvent) => { if (drag.current) setTerminalHeight(Math.max(100, Math.min(window.innerHeight - 170, window.innerHeight - e.clientY - 22))); };
+    const up = () => { drag.current = false; };
     window.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
     return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
   }, []);
 
-  const startDrag = (e: ReactMouseEvent) => { e.preventDefault(); dragRef.current = true; };
-  const closeDoc = (id: number) => {
-    if (docs.find(d => d.id === id)?.dirty && !window.confirm("Discard unsaved changes?")) return;
-    const next = docs.filter(d => d.id !== id);
-    if (!next.length) { const fresh = { id: Date.now(), path: null, name: "untitled.sv", content: "", dirty: false }; setDocs([fresh]); setActiveId(fresh.id); }
-    else { setDocs(next); if (activeId === id) setActiveId(next[next.length - 1].id); }
-  };
+  const renderTree = (entries: Entry[], depth = 0): React.ReactNode => entries.map(entry =>
+    <div key={entry.path}>
+      <button className={"tree-entry " + (entry.is_dir ? "directory" : "file")} style={{ paddingLeft: 10 + depth * 14 }} onClick={() => entry.is_dir ? void toggleDirectory(entry.path) : void openPath(entry.path)}>
+        <span className="tree-arrow">{entry.is_dir ? (expanded.has(entry.path) ? "▾" : "▸") : ""}</span>
+        <span className="tree-icon">{entry.is_dir ? "▰" : "▤"}</span><span className="tree-name">{entry.name}</span>
+      </button>
+      {entry.is_dir && expanded.has(entry.path) && tree[entry.path] && renderTree(tree[entry.path], depth + 1)}
+    </div>
+  );
+
+  const startDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = true; };
 
   return <main className="app-shell">
-    <header className="titlebar">
-      <div className="brand"><div className="brand-mark"><Code2 size={16}/></div><span>code</span><span className="brand-dot">.</span></div>
-      <div className="titlebar-center">CodeEditor <span className="title-muted">— Linux</span></div>
-      <div className="title-actions">
-        <button title="New file (Ctrl+N)" onClick={newFile}><FilePlus2 size={16}/></button>
-        <button title="Open file (Ctrl+O)" onClick={() => void openFile()}><FolderOpen size={16}/></button>
-        <button title="Save (Ctrl+S)" onClick={() => void saveDoc(active)}><Save size={16}/></button>
-      </div>
-    </header>
+    <div className="tabs">
+      {docs.map(doc => <div key={doc.id} className={"tab " + (doc.id === activeId ? "active" : "")} onClick={() => setActiveId(doc.id)}>
+        <span className="tab-icon">{doc.name.endsWith(".sv") || doc.name.endsWith(".v") ? "◆" : "▤"}</span>
+        <span className="tab-name">{doc.name}</span>{doc.dirty && <i className="dirty"/>}
+        <button className="tab-close" title="Close tab" onClick={e => { e.stopPropagation(); closeDoc(doc.id); }}>×</button>
+      </div>)}
+      <div className="tabs-fill"/>
+      <button className="tab-action" title="Open file (Ctrl+O)" onClick={() => void openFile()}>＋</button>
+      <button className="tab-action" title="Open folder (Ctrl+Shift+O)" onClick={() => void openFolder()}>▱</button>
+      <button className="tab-action terminal-toggle" title="Toggle terminal (Ctrl+`)" onClick={() => setTerminalOpen(v => !v)}>⌄</button>
+    </div>
     <div className="workspace">
-      {sidebarOpen && <aside className="sidebar">
-        <div className="side-heading"><span>EXPLORER</span><button title="New file" onClick={newFile}><FilePlus2 size={14}/></button></div>
-        <div className="tree-root"><ChevronDown size={13}/><span>OPEN EDITORS</span></div>
-        {docs.map(d => <button key={d.id} className={"tree-file " + (d.id === activeId ? "selected" : "")} onClick={() => setActiveId(d.id)}><FileCode2 size={14}/><span>{d.name}</span>{d.dirty && <i/>}</button>)}
-        <div className="side-footer"><span>LINUX WORKSPACE</span><Activity size={13}/></div>
-      </aside>}
-      <section className="main-column">
-        <div className="tabs">
-          <button className="sidebar-toggle" title="Toggle explorer" onClick={() => setSidebarOpen(v => !v)}><PanelLeft size={15}/></button>
-          {docs.map(d => <div key={d.id} className={"tab " + (d.id === activeId ? "active" : "")} onClick={() => setActiveId(d.id)}><FileCode2 size={14}/><span>{d.name}</span>{d.dirty && <i/>}<button title="Close tab" onClick={e => { e.stopPropagation(); closeDoc(d.id); }}><X size={13}/></button></div>)}
-          <div className="tabs-spacer"/>
-          <button className="icon-button" title="Toggle terminal" onClick={() => setTerminalOpen(v => !v)}><PanelBottom size={16}/></button>
-          <button className="icon-button" title="Settings (coming later)" onClick={() => setStatus("Settings are not implemented yet")}><Settings2 size={16}/></button>
+      <aside className="explorer">
+        <div className="explorer-root" title={root ?? "Open a folder"} onClick={() => void openFolder()}>
+          <span>{root ? "▾" : "▸"}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
         </div>
-        <div className="editor-area"><div className="breadcrumbs"><span>workspace</span><ChevronRight size={12}/><span className="crumb-active">{active.name}</span></div><div className="editor-host" ref={editorHost}/></div>
+        {root && tree[root] ? <div className="tree-list">{renderTree(tree[root])}</div> : <div className="empty-tree">Ctrl+Shift+O<br/>to open a folder</div>}
+      </aside>
+      <section className="editor-column">
+        <div className="editor-host" ref={editorHost}>
+          {!active && <div className="empty-editor">Open a file or create a new one<br/><span>Ctrl+O · Ctrl+N</span></div>}
+        </div>
         {terminalOpen && <>
           <div className="terminal-resize" onMouseDown={startDrag}><span/></div>
           <section className="terminal-panel" style={{ height: terminalHeight }}>
-            <div className="terminal-heading"><div className="terminal-tabs"><span className="terminal-active">TERMINAL</span><span>OUTPUT</span></div><div className="terminal-controls"><span className="terminal-state">{terminalReady ? "● CONNECTED" : "○ STARTING"}</span><button title="Close terminal" onClick={() => setTerminalOpen(false)}><X size={14}/></button></div></div>
+            <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
             <div className="terminal-host" ref={terminalHost}/>
           </section>
         </>}
       </section>
     </div>
-    <footer className="statusbar"><div className="status-left"><span className="status-branch">⌁</span><span>{status}</span></div><div className="status-right"><span>Ln {cursor.line}, Col {cursor.column}</span><span>UTF-8</span><span>{active.name.split(".").pop()?.toUpperCase() ?? "TEXT"}</span><span>Linux</span></div></footer>
+    <footer className="statusbar"><span>{status}</span><div><span>Ln {cursor.line}, Col {cursor.column}</span><span>UTF-8</span><span>{active?.name.split(".").pop()?.toUpperCase() ?? "TEXT"}</span></div></footer>
   </main>;
 }
 export default App;
