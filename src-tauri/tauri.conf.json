@@ -14,10 +14,10 @@
       "title": "Code",
       "width": 1280,
       "height": 820,
-      "minWidth": 820,
-      "minHeight": 600,
+      "minWidth": 640,
+      "minHeight": 420,
       "center": true,
-      "decorations": true,
+      "decorations": false,
       "backgroundColor": "#191a26"
     }],
     "security": { "csp": null }
