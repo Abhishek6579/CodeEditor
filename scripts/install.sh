@@ -40,7 +40,7 @@ cd "$TMP_ROOT/source"
 [[ -f "packaging/milize.desktop" ]] || fail "Desktop entry is missing from the repository."
 
 log "Installing frontend dependencies in the temporary directory..."
-npm ci --no-audit --no-fund
+npm install --no-audit --no-fund
 
 log "Building Milize. The first build can take several minutes..."
 npm run tauri -- build --no-bundle
