@@ -62,6 +62,10 @@ function App() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [root, setRoot] = useState<string | null>(null);
+  const [workspaceRestored, setWorkspaceRestored] = useState(false);
+  const [cursorPositions, setCursorPositions] = useState<Record<string, { line: number; column: number }>>({});
+  const cursorPositionsRef = useRef(cursorPositions);
+  cursorPositionsRef.current = cursorPositions;
   const [tree, setTree] = useState<Record<string, Entry[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [terminalHeight, setTerminalHeight] = useState(210);
@@ -133,6 +137,7 @@ function App() {
     if (typeof selected !== "string") return;
     setRoot(selected);
     setExpanded(new Set([selected]));
+    void invoke("terminal_change_directory", { path: selected }).catch(() => {});
     await loadDirectory(selected);
     setStatus("Opened folder " + base(selected));
   }, [loadDirectory]);
@@ -158,8 +163,66 @@ function App() {
     if (activeIdRef.current === id) setActiveId((remaining.length ? remaining[remaining.length - 1].id : null));
   };
 
+
   useEffect(() => {
-    if (!editorHost.current || !active) { editor.current?.destroy(); editor.current = null; return; }
+    let cancelled = false;
+    const restoreWorkspace = async () => {
+      try {
+        const raw = localStorage.getItem("codeeditor.workspace.v1");
+        const saved = raw ? JSON.parse(raw) as {
+          root?: string | null;
+          files?: string[];
+          activePath?: string | null;
+          cursors?: Record<string, { line: number; column: number }>;
+        } : null;
+        if (saved?.cursors) setCursorPositions(saved.cursors);
+        if (saved?.root) {
+          setRoot(saved.root);
+          setExpanded(new Set([saved.root]));
+          await loadDirectory(saved.root);
+        }
+        if (saved?.files?.length) {
+          const restoredDocs: Doc[] = [];
+          for (const path of saved.files) {
+            try {
+              const content = await invoke<string>("read_file", { path });
+              restoredDocs.push({ id: Date.now() + Math.random(), path, name: base(path), content, dirty: false });
+            } catch { /* Skip files deleted or moved since the previous session. */ }
+          }
+          if (!cancelled && restoredDocs.length) {
+            setDocs(restoredDocs);
+            const selected = restoredDocs.find(doc => doc.path === saved?.activePath) ?? restoredDocs[0];
+            setActiveId(selected.id);
+            const savedCursor = selected.path ? saved?.cursors?.[selected.path] : undefined;
+            if (savedCursor) setCursor(savedCursor);
+          }
+        }
+      } catch (error) {
+        console.warn("Could not restore workspace:", error);
+      } finally {
+        if (!cancelled) setWorkspaceRestored(true);
+      }
+    };
+    void restoreWorkspace();
+    return () => { cancelled = true; };
+  }, [loadDirectory]);
+
+  useEffect(() => {
+    if (!workspaceRestored) return;
+    try {
+      localStorage.setItem("codeeditor.workspace.v1", JSON.stringify({
+        root,
+        files: docs.filter(doc => doc.path).map(doc => doc.path),
+        activePath: docs.find(doc => doc.id === activeId)?.path ?? null,
+        cursors: cursorPositions
+      }));
+    } catch (error) {
+      console.warn("Could not save workspace state:", error);
+    }
+  }, [workspaceRestored, root, docs, activeId, cursorPositions]);
+
+  useEffect(() => {
+    if (!workspaceRestored || !editorHost.current || !active) { editor.current?.destroy(); editor.current = null; return; }
     const state = EditorState.create({
       doc: active.content,
       extensions: [
@@ -185,13 +248,24 @@ function App() {
           if (update.selectionSet) {
             const pos = update.state.selection.main.head;
             const line = update.state.doc.lineAt(pos);
-            setCursor({ line: line.number, column: pos - line.from + 1 });
+            const nextCursor = { line: line.number, column: pos - line.from + 1 };
+            setCursor(nextCursor);
+            if (active.path) setCursorPositions(old => ({ ...old, [active.path!]: nextCursor }));
           }
         })
       ]
     });
     const view = new EditorView({ state, parent: editorHost.current });
     editor.current = view;
+    if (active.path) {
+      const saved = cursorPositionsRef.current[active.path];
+      if (saved) {
+        const line = state.doc.line(Math.max(1, Math.min(state.doc.lines, saved.line)));
+        const pos = Math.min(line.to, line.from + Math.max(0, saved.column - 1));
+        view.dispatch({ selection: { anchor: pos } });
+        setCursor({ line: line.number, column: pos - line.from + 1 });
+      }
+    }
     let alive = true;
     const language = languageFor(active.name);
     if (language) {
@@ -202,10 +276,10 @@ function App() {
     return () => { alive = false; view.destroy(); if (editor.current === view) editor.current = null; };
   // A fresh CodeMirror state is created when switching tabs or changing editor zoom.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId, editorFontSize]);
+  }, [activeId, editorFontSize, workspaceRestored]);
 
   useEffect(() => {
-    if (!terminalHost.current || terminal.current) return;
+    if (!workspaceRestored || !terminalHost.current || terminal.current) return;
     const term = new Terminal({
       cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize: terminalFontSize,
       theme: { background: "#11111b", foreground: "#cdd6f4", cursor: "#f5e0dc", cursorAccent: "#11111b", selectionBackground: "#45475a", black: "#181825", red: "#f38ba8", green: "#a6e3a1", yellow: "#f9e2af", blue: "#89b4fa", magenta: "#cba6f7", cyan: "#89dceb", white: "#bac2de", brightBlack: "#585b70", brightRed: "#f38ba8", brightGreen: "#a6e3a1", brightYellow: "#f9e2af", brightBlue: "#89b4fa", brightMagenta: "#cba6f7", brightCyan: "#89dceb", brightWhite: "#a6adc8" }
@@ -220,7 +294,7 @@ function App() {
       try { fit.fit(); const size = fit.proposeDimensions(); if (size) void invoke("terminal_resize", { cols: size.cols, rows: size.rows }); } catch {}
     });
     observer.observe(terminalHost.current);
-    void invoke("start_terminal").then(() => {
+    void invoke("start_terminal", { cwd: root }).then(() => {
       setTerminalReady(true);
       requestAnimationFrame(() => { try { fit.fit(); const size = fit.proposeDimensions(); if (size) void invoke("terminal_resize", { cols: size.cols, rows: size.rows }); } catch {} });
     }).catch(e => setStatus("Terminal failed: " + String(e)));
@@ -228,7 +302,7 @@ function App() {
       data.dispose(); void unlisten.then(fn => fn()); observer.disconnect(); term.dispose(); terminal.current = null;
       void invoke("terminal_close"); setTerminalReady(false);
     };
-  }, []);
+  }, [workspaceRestored]);
 
   useEffect(() => {
     if (terminal.current) terminal.current.options.fontSize = terminalFontSize;
