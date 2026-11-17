@@ -24,7 +24,7 @@ cd milize
 ./scripts/install.sh
 ~~~
 
-The installer checks that the system is Arch-based, installs required build/runtime packages with pacman, builds Milize locally and installs the executable, icon and application-menu entry under `/usr/local`.
+The installer checks that the system is Arch-based, installs the required runtime libraries and any missing build tools, then builds Milize in a temporary directory. After a successful installation it removes the temporary source tree, `node_modules`, Rust build output and build-only packages newly installed by the script when pacman confirms they can be safely removed. Existing packages and shared runtime libraries are left untouched. The installed executable, icon and application-menu entry are placed under `/usr/local`.
 
 You can also run the installer directly without cloning:
 
@@ -32,7 +32,7 @@ You can also run the installer directly without cloning:
 curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/install.sh | bash
 ~~~
 
-Run it as your normal user; it requests sudo only when required. Do not run it as root. The first installation compiles Rust and frontend dependencies and can take several minutes.
+Run it as your normal user; it requests sudo only when required. Do not run it as root. The first installation compiles Rust and frontend dependencies and can take several minutes. Build tools that were already present before installation are not removed.
 
 To uninstall:
 
@@ -46,7 +46,7 @@ Or run the remote uninstaller:
 curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/uninstall.sh | bash
 ~~~
 
-The uninstaller removes Milize application files and leaves build dependencies installed.
+The uninstaller removes Milize application files but leaves shared system/runtime dependencies untouched. Build tools already present before installation are not automatically removed.
 
 ## Arch package
 
