@@ -2,9 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { StreamLanguage } from "@codemirror/language";
-import { verilog } from "@codemirror/legacy-modes/mode/verilog";
-import { cpp } from "@codemirror/lang-cpp";
+import { LanguageDescription, languages } from "@codemirror/language-data";
+import { StateEffect } from "@codemirror/state";
 import { basicSetup } from "codemirror";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -16,12 +15,7 @@ import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, PanelLe
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
 type Entry = { name: string; path: string; is_dir: boolean };
 const base = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() || p;
-const modeFor = (name: string) => {
-  const ext = name.split(".").pop()?.toLowerCase();
-  if (["v", "vh", "sv", "svh"].includes(ext || "")) return StreamLanguage.define(verilog);
-  if (["c", "h", "cc", "cpp", "cxx", "hpp", "hh"].includes(ext || "")) return cpp();
-  return [];
-};
+const languageFor = (name: string) => LanguageDescription.matchFilename(languages, name);
 
 function App() {
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -126,7 +120,7 @@ function App() {
     const state = EditorState.create({
       doc: active.content,
       extensions: [
-        basicSetup, modeFor(active.name), EditorView.lineWrapping,
+        basicSetup, EditorView.lineWrapping,
         EditorView.theme({
           "&": { height: "100%", backgroundColor: "#191a26", color: "#c0c1d2", fontSize: fontSize + "px" },
           ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "10px 0", caretColor: "#b7a0e5" },
@@ -149,8 +143,16 @@ function App() {
         })
       ]
     });
-    editor.current = new EditorView({ state, parent: editorHost.current });
-    return () => { editor.current?.destroy(); editor.current = null; };
+    const view = new EditorView({ state, parent: editorHost.current });
+    editor.current = view;
+    let alive = true;
+    const language = languageFor(active.name);
+    if (language) {
+      void language.load().then(support => {
+        if (alive) view.dispatch({ effects: StateEffect.appendConfig.of(support) });
+      }).catch(error => setStatus("Language loading failed: " + String(error)));
+    }
+    return () => { alive = false; view.destroy(); if (editor.current === view) editor.current = null; };
   // A fresh CodeMirror state is created when switching tabs or changing editor zoom.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, fontSize]);
