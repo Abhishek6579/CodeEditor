@@ -40,6 +40,9 @@ function App() {
   const fitRef = useRef<FitAddon | null>(null);
   const dragRef = useRef(false);
   const active = docs.find(d => d.id === activeId) ?? docs[0];
+  const docsRef = useRef(docs);
+  const saveDocRef = useRef<(doc: Document) => Promise<void>>(async () => {});
+  docsRef.current = docs;
 
   const updateDoc = useCallback((id: number, patch: Partial<Document>) => {
     setDocs(prev => prev.map(d => d.id === id ? { ...d, ...patch } : d));
@@ -58,6 +61,8 @@ function App() {
       setStatus("Saved " + basename(path));
     } catch (e) { setStatus("Save failed: " + String(e)); }
   }, [updateDoc]);
+
+  saveDocRef.current = saveDoc;
 
   const openFile = useCallback(async () => {
     try {
@@ -78,7 +83,7 @@ function App() {
 
   useEffect(() => {
     if (!editorHost.current) return;
-    const saveKey = keymap.of([{ key: "Mod-s", run: () => { const d = docs.find(x => x.id === activeId); if (d) void saveDoc(d); return true; } }]);
+    const saveKey = keymap.of([{ key: "Mod-s", run: () => { const d = docsRef.current.find(x => x.id === activeId); if (d) void saveDocRef.current({ ...d, content: editorView.current?.state.doc.toString() ?? d.content }); return true; } }]);
     const state = EditorState.create({
       doc: active.content,
       extensions: [
@@ -136,13 +141,14 @@ function App() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); const d = docsRef.current.find(x => x.id === activeId); if (d) void saveDocRef.current({ ...d, content: editorView.current?.state.doc.toString() ?? d.content }); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
       if ((e.ctrlKey || e.metaKey) && e.key === "`") { e.preventDefault(); setTerminalOpen(v => !v); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openFile]);
+  }, [openFile, activeId]);
 
   useEffect(() => {
     const move = (e: MouseEvent) => { if (dragRef.current) setTerminalHeight(Math.max(120, Math.min(window.innerHeight - 250, window.innerHeight - e.clientY - 32))); };
