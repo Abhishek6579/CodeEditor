@@ -58,7 +58,7 @@ Name=Milize
 GenericName=Code Editor
 Comment=A lightweight code editor with an integrated terminal
 Exec="$APPIMAGE_DEST" %U
-TryExec=$APPIMAGE_DEST
+TryExec="$APPIMAGE_DEST"
 Icon=$ICON_DIR/milize.png
 Terminal=false
 StartupNotify=true
@@ -72,6 +72,12 @@ EOF
 chmod 644 "$DESKTOP_DIR/milize.desktop"
 if command -v update-desktop-database >/dev/null 2>&1; then
   update-desktop-database "$DESKTOP_DIR" >/dev/null 2>&1 || true
+fi
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -f "$APP_DIR/icons/hicolor" >/dev/null 2>&1 || true
+fi
+if command -v kbuildsycoca6 >/dev/null 2>&1; then
+  kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
 fi
 
 echo "[Milize] Desktop integration installed."
