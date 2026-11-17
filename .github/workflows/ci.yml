@@ -7,6 +7,14 @@ on:
     branches: [master]
 
 jobs:
+  scripts:
+    name: Validate installer scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash syntax
+        run: bash -n install.sh uninstall.sh PKGBUILD
+
   frontend:
     name: Frontend typecheck and build
     runs-on: ubuntu-latest
