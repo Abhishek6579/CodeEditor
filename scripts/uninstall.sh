@@ -22,4 +22,4 @@ if command -v update-desktop-database >/dev/null 2>&1; then
   sudo update-desktop-database /usr/local/share/applications >/dev/null 2>&1 || true
 fi
 
-echo "Milize has been removed. Build dependencies were left installed."
+echo "Milize has been removed. Shared system/runtime dependencies were left untouched."
