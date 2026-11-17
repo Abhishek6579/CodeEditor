@@ -2,7 +2,6 @@
 set -Eeuo pipefail
 
 REPO_URL="https://github.com/Abhishek6579/milize.git"
-APP_NAME="Milize"
 BINARY_NAME="milize"
 INSTALL_PREFIX="/usr/local"
 
@@ -17,6 +16,11 @@ fi
 
 command -v sudo >/dev/null 2>&1 || fail "sudo is required to install system dependencies and application files."
 
+log "Installing build and runtime dependencies with pacman..."
+sudo pacman -S --needed --noconfirm \
+  base-devel git curl file openssl gtk3 libayatana-appindicator \
+  librsvg webkit2gtk-4.1 nodejs npm rust
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 WORK_DIR=""
@@ -26,11 +30,6 @@ if [[ -f "${REPO_ROOT}/package.json" && -f "${REPO_ROOT}/src-tauri/tauri.conf.js
   WORK_DIR="${REPO_ROOT}"
   log "Using the existing repository at: ${WORK_DIR}"
 else
-  log "Installing build and runtime dependencies with pacman..."
-  sudo pacman -S --needed --noconfirm \
-    base-devel git curl file openssl gtk3 libayatana-appindicator \
-    librsvg webkit2gtk-4.1 nodejs npm rust
-
   WORK_DIR="$(mktemp -d -t milize-install.XXXXXX)"
   CLEANUP_WORK_DIR=1
   log "Cloning the latest master branch..."
@@ -44,12 +43,6 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
-
-# Ensure dependencies are present when installing from a local clone too.
-log "Installing build and runtime dependencies with pacman..."
-sudo pacman -S --needed --noconfirm \
-  base-devel git curl file openssl gtk3 libayatana-appindicator \
-  librsvg webkit2gtk-4.1 nodejs npm rust
 
 cd "$WORK_DIR"
 [[ -f "src-tauri/icons/icon.png" ]] || fail "Application icon is missing from the repository."

@@ -168,7 +168,7 @@ function App() {
     let cancelled = false;
     const restoreWorkspace = async () => {
       try {
-        const raw = localStorage.getItem("codeeditor.workspace.v1");
+        const raw = localStorage.getItem("milize.workspace.v1") ?? localStorage.getItem("codeeditor.workspace.v1");
         const saved = raw ? JSON.parse(raw) as {
           root?: string | null;
           files?: string[];
@@ -210,12 +210,13 @@ function App() {
   useEffect(() => {
     if (!workspaceRestored) return;
     try {
-      localStorage.setItem("codeeditor.workspace.v1", JSON.stringify({
+      localStorage.setItem("milize.workspace.v1", JSON.stringify({
         root,
         files: docs.filter(doc => doc.path).map(doc => doc.path),
         activePath: docs.find(doc => doc.id === activeId)?.path ?? null,
         cursors: cursorPositions
       }));
+      localStorage.removeItem("codeeditor.workspace.v1");
     } catch (error) {
       console.warn("Could not save workspace state:", error);
     }
