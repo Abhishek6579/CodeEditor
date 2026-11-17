@@ -227,9 +227,6 @@ function App() {
         <button className="tab-close" title="Close tab" onClick={e => { e.stopPropagation(); closeDoc(doc.id); }}>×</button>
       </div>)}
       <div className="tabs-fill"/>
-      <button className="tab-action" title="Open file (Ctrl+O)" onClick={() => void openFile()}>＋</button>
-      <button className="tab-action" title="Open folder (Ctrl+Shift+O)" onClick={() => void openFolder()}>▱</button>
-      <button className="tab-action terminal-toggle" title="Toggle terminal (Ctrl+`)" onClick={() => setTerminalOpen(v => !v)}>⌄</button>
     </div>
     <div className="workspace">
       <aside className="explorer">
