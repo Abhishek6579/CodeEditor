@@ -1,8 +1,8 @@
 [package]
 name = "code-editor"
-version = "0.1.0"
-description = "A minimal Linux code editor"
-authors = ["CodeEditor"]
+version = "1.0.0"
+description = "A minimal Linux desktop code editor"
+authors = ["Abhishek Yadav"]
 edition = "2021"
 
 [lib]
