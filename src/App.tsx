@@ -11,7 +11,8 @@ import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FileSpreadsheet, FileVideo, FileAudio, FileTerminal, FileType, FileCog, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
 type Entry = { name: string; path: string; is_dir: boolean };
@@ -19,6 +20,26 @@ const base = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() || p;
 const languageFor = (name: string) =>
   LanguageDescription.matchFilename(languages, name) ??
   (/\\.vh$/i.test(name) ? languages.find(language => language.name === "Verilog") : undefined);
+
+const fileIconFor = (filename: string): { Icon: LucideIcon; color: string } => {
+  const name = filename.toLowerCase();
+  const ext = name.includes(".") ? name.split(".").pop()! : "";
+  if (["v", "vh", "sv", "svh", "c", "h", "cc", "cpp", "cxx", "hpp", "hxx", "rs", "go", "java"].includes(ext)) return { Icon: FileCode2, color: "#89b4fa" };
+  if (["py", "js", "jsx", "ts", "tsx", "php", "rb", "lua", "swift", "kt", "kts"].includes(ext)) return { Icon: FileCode2, color: "#f9e2af" };
+  if (["json", "jsonc", "json5"].includes(ext)) return { Icon: FileJson, color: "#f9e2af" };
+  if (["html", "htm", "xml", "svg"].includes(ext)) return { Icon: FileCode2, color: "#fab387" };
+  if (["css", "scss", "sass", "less"].includes(ext)) return { Icon: FileType, color: "#89dceb" };
+  if (["md", "mdx", "txt", "log", "rst"].includes(ext)) return { Icon: FileText, color: "#bac2de" };
+  if (["yaml", "yml", "toml", "ini", "conf", "config", "env"].includes(ext) || ["dockerfile", "makefile", ".gitignore", ".editorconfig"].includes(name)) return { Icon: FileCog, color: "#a6e3a1" };
+  if (["sh", "bash", "zsh", "fish"].includes(ext)) return { Icon: FileTerminal, color: "#a6e3a1" };
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico"].includes(ext)) return { Icon: FileImage, color: "#cba6f7" };
+  if (["zip", "tar", "gz", "7z", "rar", "xz"].includes(ext)) return { Icon: FileArchive, color: "#fab387" };
+  if (["csv", "xls", "xlsx", "ods"].includes(ext)) return { Icon: FileSpreadsheet, color: "#a6e3a1" };
+  if (["mp4", "mkv", "mov", "webm"].includes(ext)) return { Icon: FileVideo, color: "#cba6f7" };
+  if (["mp3", "wav", "flac", "ogg"].includes(ext)) return { Icon: FileAudio, color: "#f38ba8" };
+  if (ext === "pdf") return { Icon: FileText, color: "#f38ba8" };
+  return { Icon: File, color: "#a6adc8" };
+};
 
 const catppuccinHighlight = HighlightStyle.define([
   { tag: tags.comment, color: "#6c7086", fontStyle: "italic" },
@@ -240,8 +261,13 @@ function App() {
   const renderTree = (entries: Entry[], depth = 0): ReactNode => entries.map(entry =>
     <div key={entry.path}>
       <button className={"tree-entry " + (entry.is_dir ? "directory" : "file")} style={{ paddingLeft: 10 + depth * 14 }} onClick={() => entry.is_dir ? void toggleDirectory(entry.path) : void openPath(entry.path)}>
-        <span className="tree-arrow">{entry.is_dir ? (expanded.has(entry.path) ? "▾" : "▸") : ""}</span>
-        <span className="tree-icon">{entry.is_dir ? "▰" : "▤"}</span><span className="tree-name">{entry.name}</span>
+        <span className="tree-arrow">{entry.is_dir ? (expanded.has(entry.path) ? <ChevronDown size={12} /> : <ChevronRight size={12} />) : null}</span>
+        <span className="tree-icon">
+          {entry.is_dir
+            ? (expanded.has(entry.path) ? <FolderOpen size={15} color="#f9c96b" /> : <Folder size={15} color="#e5a84b" />)
+            : (() => { const { Icon, color } = fileIconFor(entry.name); return <Icon size={14} color={color} strokeWidth={1.8} />; })()}
+        </span>
+        <span className="tree-name">{entry.name}</span>
       </button>
       {entry.is_dir && expanded.has(entry.path) && tree[entry.path] && renderTree(tree[entry.path], depth + 1)}
     </div>
@@ -264,7 +290,7 @@ function App() {
       {sidebarVisible && <>
         <aside className="explorer" style={{ width: sidebarWidth }}>
           <div className="explorer-root" title={root ?? "Open a folder"} onClick={() => void openFolder()}>
-            <span>{root ? "▾" : "▸"}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
+            <span className="tree-icon">{root ? <FolderOpen size={15} color="#f9c96b" /> : <Folder size={15} color="#e5a84b" />}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
           </div>
           {root && tree[root] ? <div className="tree-list">{renderTree(tree[root])}</div> : <div className="empty-tree">Ctrl+Shift+O<br/>to open a folder</div>}
         </aside>
