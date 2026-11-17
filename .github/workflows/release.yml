@@ -20,6 +20,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -35,23 +36,29 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Build .deb and AppImage
-        run: npm run tauri build
+        run: npm run tauri -- build --bundles deb,appimage
 
-      - name: Generate SHA-256 checksums
+      - name: Verify release artifacts and generate SHA-256 checksums
         shell: bash
         run: |
-          mapfile -d '' artifacts < <(find src-tauri/target/release/bundle \
-            -type f \( -name '*.deb' -o -name '*.AppImage' \) -print0)
-          if (( \${#artifacts[@]} == 0 )); then
-            echo "No Linux release artifacts were generated." >&2
+          bundle_dir="src-tauri/target/release/bundle"
+          mapfile -d '' artifacts < <(find "$bundle_dir" -type f \\( -name '*.deb' -o -name '*.AppImage' \\) -print0)
+          if (( ${#artifacts[@]} == 0 )); then
+            echo "No .deb or AppImage artifacts were generated." >&2
             exit 1
           fi
-          sha256sum "\${artifacts[@]}" > SHA256SUMS
+          if ! printf '%s\\n' "${artifacts[@]}" | grep -q '\\.AppImage$'; then
+            echo "AppImage artifact is missing; refusing to publish an incomplete release." >&2
+            exit 1
+          fi
+          sha256sum "${artifacts[@]}" > SHA256SUMS
+          cat SHA256SUMS
 
       - name: Publish release artifacts
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          fail_on_unmatched_files: true
           files: |
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
