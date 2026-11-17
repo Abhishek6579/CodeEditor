@@ -2,7 +2,7 @@
 
 **Milize** is a lightweight Linux desktop code editor focused on a clean workspace for systems programming and everyday source editing. It combines a file explorer, tabbed editor and integrated terminal in one compact window.
 
-![Platform](https://img.shields.io/badge/platform-Linux-blue) ![Version](https://img.shields.io/badge/version-1.0.0-informational) ![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-Linux-blue) ![Version](https://img.shields.io/badge/version-1.0.2-informational) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
@@ -24,29 +24,50 @@ cd milize
 ./scripts/install.sh
 ~~~
 
-The installer checks that the system is Arch-based, installs the required runtime libraries and any missing build tools, then builds Milize in a temporary directory. After a successful installation it removes the temporary source tree, `node_modules`, Rust build output and build-only packages newly installed by the script when pacman confirms they can be safely removed. Existing packages and shared runtime libraries are left untouched. The installed executable, icon and application-menu entry are placed under `/usr/local`.
+The installer checks that the system is Arch-based, installs required runtime libraries and missing build tools, then builds Milize in a temporary directory. It installs the executable, icon and application-menu entry under `/usr/local`. Temporary source and build output are removed after installation.
 
-You can also run the installer directly without cloning:
+Run it as your normal user; it requests sudo only when required. Do not run it as root. The first installation compiles Rust and frontend dependencies and can take several minutes.
+
+One-command installation:
 
 ~~~bash
 curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/install.sh | bash
 ~~~
 
-Run it as your normal user; it requests sudo only when required. Do not run it as root. The first installation compiles Rust and frontend dependencies and can take several minutes. Build tools that were already present before installation are not removed.
+## AppImage (portable or integrated)
 
-To uninstall:
+An AppImage can be launched directly and does not need installation:
+
+~~~bash
+chmod +x Milize_*.AppImage
+./Milize_*.AppImage
+~~~
+
+Launching a portable AppImage does **not** reliably create an application-menu entry. To install it into your user account and register Milize in the desktop application launcher (including KDE Plasma's application menu), run:
+
+~~~bash
+./scripts/integrate-appimage.sh ./Milize_1.0.2_amd64.AppImage
+~~~
+
+The integration script copies the AppImage to `~/.local/opt/milize/`, extracts its bundled desktop metadata and icon, and creates a launcher under `~/.local/share/applications/`. It does not require root. Keep the installed AppImage at that location; the launcher points to it.
+
+If you only want to use the AppImage temporarily, continue launching it directly. If you want a normal menu entry, use the integration script or install the DEB package on a supported Debian/Ubuntu system.
+
+## Uninstall
+
+From a source checkout:
 
 ~~~bash
 ./scripts/uninstall.sh
 ~~~
 
-Or run the remote uninstaller:
+The source uninstaller removes the system-wide Arch installer files. For an AppImage integration installed in your home directory, remove it with:
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/uninstall.sh | bash
+rm -f ~/.local/share/applications/milize.desktop
+rm -rf ~/.local/opt/milize
+rm -f ~/.local/share/icons/hicolor/512x512/apps/milize.png
 ~~~
-
-The uninstaller removes Milize application files but leaves shared system/runtime dependencies untouched. Build tools already present before installation are not automatically removed.
 
 ## Arch package
 
@@ -58,7 +79,7 @@ makepkg -si
 
 ## Other Linux distributions
 
-Official .deb and AppImage downloads, when published, are available on the [GitHub Releases](https://github.com/Abhishek6579/milize/releases) page. The source installer currently supports Arch Linux and Arch-based distributions only.
+Official .deb and AppImage downloads are published on the [GitHub Releases](https://github.com/Abhishek6579/milize/releases) page. The source installer currently supports Arch Linux and Arch-based distributions only.
 
 ## Build prerequisites
 
@@ -139,7 +160,7 @@ milize/
 │   └── workflows/       # CI and release automation
 ├── docs/                # Architecture and installation guides
 ├── packaging/           # Desktop integration assets
-├── scripts/             # Installer and uninstaller
+├── scripts/             # Installer, uninstaller and AppImage integration
 ├── src/                 # React frontend
 ├── src-tauri/           # Tauri and Rust backend
 └── PKGBUILD             # Arch package recipe
@@ -158,7 +179,7 @@ milize/
 - [Tauri 2](https://v2.tauri.app/) and Rust
 - React 19 and TypeScript
 - [CodeMirror 6](https://codemirror.net/)
-- [xterm.js](https://xtermjs.org/) and portable-pty
+- [xterm.js](https://xtermjs.org/)
 - Lucide icons
 - Catppuccin Mocha palette
 
