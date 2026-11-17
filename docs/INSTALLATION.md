@@ -5,7 +5,7 @@
 ~~~bash
 git clone https://github.com/Abhishek6579/milize.git
 cd milize
-./install.sh
+./scripts/install.sh
 ~~~
 
 The installer:
@@ -21,7 +21,7 @@ Run it as your normal user, not with sudo. The first build can take several minu
 ## One-command remote installation
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/install.sh | bash
 ~~~
 
 ## Uninstall
@@ -29,13 +29,13 @@ curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/install.
 From a clone:
 
 ~~~bash
-./uninstall.sh
+./scripts/uninstall.sh
 ~~~
 
 Or remotely:
 
 ~~~bash
-curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Abhishek6579/milize/master/scripts/uninstall.sh | bash
 ~~~
 
 This removes installed Milize application files but deliberately leaves build dependencies installed.
