@@ -185,18 +185,24 @@ button {
 }
 .tree-entry:hover { background: #30384a; }
 .tree-arrow {
-  width: 10px;
+  width: 12px;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #6c7086;
-  text-align: center;
 }
 .tree-icon {
-  width: 13px;
+  width: 17px;
   flex: none;
-  color: #89b4fa;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
 }
-.tree-entry.file .tree-icon { color: #fab387; }
+.tree-entry.file .tree-icon { color: #a6adc8; }
+.tree-entry .tree-icon svg { display: block; flex: none; }
+.explorer-root .tree-icon { width: 17px; }
 .tree-name { overflow: hidden; text-overflow: ellipsis; }
 .empty-tree {
   padding: 12px;
