@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { StreamLanguage } from "@codemirror/language";
@@ -208,7 +208,7 @@ function App() {
     return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
   }, []);
 
-  const renderTree = (entries: Entry[], depth = 0): React.ReactNode => entries.map(entry =>
+  const renderTree = (entries: Entry[], depth = 0): ReactNode => entries.map(entry =>
     <div key={entry.path}>
       <button className={"tree-entry " + (entry.is_dir ? "directory" : "file")} style={{ paddingLeft: 10 + depth * 14 }} onClick={() => entry.is_dir ? void toggleDirectory(entry.path) : void openPath(entry.path)}>
         <span className="tree-arrow">{entry.is_dir ? (expanded.has(entry.path) ? "▾" : "▸") : ""}</span>
