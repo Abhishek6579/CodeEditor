@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Code
+GenericName=Code Editor
+Comment=A minimal code editor with an integrated terminal
+Exec=code-editor
+Icon=code-editor
+Terminal=false
+StartupNotify=true
+Categories=Development;IDE;TextEditor;
+MimeType=text/plain;
