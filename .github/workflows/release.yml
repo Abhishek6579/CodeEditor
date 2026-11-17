@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -42,16 +41,18 @@ jobs:
         shell: bash
         run: |
           bundle_dir="src-tauri/target/release/bundle"
-          mapfile -d '' artifacts < <(find "$bundle_dir" -type f \\( -name '*.deb' -o -name '*.AppImage' \\) -print0)
-          if (( ${#artifacts[@]} == 0 )); then
+          artifact_list="$(mktemp)"
+          find "$bundle_dir" -type f \( -name '*.deb' -o -name '*.AppImage' \) -print0 > "$artifact_list"
+          if [[ ! -s "$artifact_list" ]]; then
             echo "No .deb or AppImage artifacts were generated." >&2
             exit 1
           fi
-          if ! printf '%s\\n' "${artifacts[@]}" | grep -q '\\.AppImage$'; then
+          if ! grep -zq '\.AppImage$' "$artifact_list"; then
             echo "AppImage artifact is missing; refusing to publish an incomplete release." >&2
             exit 1
           fi
-          sha256sum "${artifacts[@]}" > SHA256SUMS
+          xargs -0 sha256sum < "$artifact_list" > SHA256SUMS
+          rm -f "$artifact_list"
           cat SHA256SUMS
 
       - name: Publish release artifacts
