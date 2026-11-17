@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { EditorState } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { StreamLanguage } from "@codemirror/language";
 import { verilog } from "@codemirror/legacy-modes/mode/verilog";
 import { cpp } from "@codemirror/lang-cpp";
@@ -120,15 +120,10 @@ function App() {
 
   useEffect(() => {
     if (!editorHost.current || !active) { editor.current?.destroy(); editor.current = null; return; }
-    const saveKey = keymap.of([{ key: "Mod-s", run: () => {
-      const d = docsRef.current.find(x => x.id === activeId);
-      if (d) void saveRef.current({ ...d, content: editor.current?.state.doc.toString() ?? d.content });
-      return true;
-    }}]);
     const state = EditorState.create({
       doc: active.content,
       extensions: [
-        basicSetup, modeFor(active.name), EditorView.lineWrapping, saveKey,
+        basicSetup, modeFor(active.name), EditorView.lineWrapping,
         EditorView.theme({
           "&": { height: "100%", backgroundColor: "#191a26", color: "#c0c1d2", fontSize: fontSize + "px" },
           ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "10px 0", caretColor: "#b7a0e5" },
@@ -182,6 +177,10 @@ function App() {
       void invoke("terminal_close"); setTerminalReady(false);
     };
   }, []);
+
+  useEffect(() => {
+    if (terminal.current) terminal.current.options.fontSize = fontSize;
+  }, [fontSize]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
