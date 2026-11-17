@@ -55,7 +55,7 @@ const catppuccinHighlight = HighlightStyle.define([
   { tag: tags.constant(tags.variableName), color: "#fab387" },
   { tag: tags.standard(tags.variableName), color: "#94e2d5" },
   { tag: tags.special(tags.variableName), color: "#f38ba8" },
-  { tag: tags.local(tags.variableName), color: "#f5c2e7" },
+  { tag: tags.local(tags.variableName), color: "#cdd6f4", fontWeight: "bold" },
   { tag: [tags.variableName, tags.self], color: "#cdd6f4" },
 
   { tag: [tags.typeName, tags.className], color: "#f9e2af" },
