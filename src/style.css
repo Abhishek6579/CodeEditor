@@ -122,7 +122,7 @@ button {
   background: #181825;
   border: 1px solid #313244;
   border-radius: 12px;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .explorer-root {
@@ -140,7 +140,37 @@ button {
 }
 .explorer-root:hover { background: #242438; }
 .root-name { overflow: hidden; text-overflow: ellipsis; }
-.tree-list { padding: 0 0 8px; }
+.tree-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tree-list::-webkit-scrollbar { display: none; }
+.empty-tree { flex: 1; overflow: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.empty-tree::-webkit-scrollbar { display: none; }
+
+.sidebar-resize {
+  width: 7px;
+  flex: none;
+  margin: 0 -3px;
+  position: relative;
+  z-index: 2;
+  cursor: col-resize;
+  display: grid;
+  place-items: center;
+}
+.sidebar-resize span {
+  width: 2px;
+  height: 34px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background-color 120ms ease, height 120ms ease;
+}
+.sidebar-resize:hover span { height: 48px; background: #585b70; }
 .tree-entry {
   height: 21px;
   width: 100%;
@@ -308,3 +338,8 @@ button:focus-visible { outline: 1px solid #b4befe; outline-offset: -2px; }
 .terminal-heading { background: #181825; }
 .terminal-resize span { transition: background-color 120ms ease, width 120ms ease; }
 .terminal-resize:hover span { width: 48px; background: #b4befe; }
+
+/* Explorer scrollbar is hidden; scrolling remains enabled */
+.explorer { overflow: hidden; }
+.tree-list, .empty-tree { scrollbar-width: none; }
+.tree-list::-webkit-scrollbar, .empty-tree::-webkit-scrollbar { display: none; }
