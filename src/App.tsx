@@ -69,7 +69,9 @@ function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [terminalReady, setTerminalReady] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
-  const [fontSize, setFontSize] = useState(14);
+  const [editorFontSize, setEditorFontSize] = useState(14);
+  const [terminalFontSize, setTerminalFontSize] = useState(13);
+  const [focusedSurface, setFocusedSurface] = useState<"editor" | "terminal">("editor");
   const [status, setStatus] = useState("Ready");
   const editorHost = useRef<HTMLDivElement>(null);
   const editor = useRef<EditorView | null>(null);
@@ -163,7 +165,7 @@ function App() {
       extensions: [
         basicSetup, EditorView.lineWrapping, syntaxHighlighting(catppuccinHighlight),
         EditorView.theme({
-          "&": { height: "100%", backgroundColor: "#1e1e2e", color: "#cdd6f4", fontSize: fontSize + "px" },
+          "&": { height: "100%", backgroundColor: "#1e1e2e", color: "#cdd6f4", fontSize: editorFontSize + "px" },
           ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "12px 0", caretColor: "#f5e0dc" },
           ".cm-line": { paddingLeft: "4px" },
           ".cm-gutters": { backgroundColor: "#181825", color: "#6c7086", border: "none", minWidth: "48px" },
@@ -200,7 +202,7 @@ function App() {
     return () => { alive = false; view.destroy(); if (editor.current === view) editor.current = null; };
   // A fresh CodeMirror state is created when switching tabs or changing editor zoom.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId, fontSize]);
+  }, [activeId, editorFontSize]);
 
   useEffect(() => {
     if (!terminalHost.current || terminal.current) return;
@@ -248,7 +250,7 @@ function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openFile, openFolder]);
+  }, [openFile, openFolder, focusedSurface]);
 
   useEffect(() => {
     const move = (e: MouseEvent) => { if (drag.current === "terminal") setTerminalHeight(Math.max(100, Math.min(window.innerHeight - 170, window.innerHeight - e.clientY - 22)));
@@ -297,13 +299,13 @@ function App() {
         <div className="sidebar-resize" onMouseDown={startSidebarDrag} title="Drag to resize explorer"><span/></div>
       </>}
       <section className="editor-column">
-        <div className="editor-host" ref={editorHost}>
+        <div className="editor-host" ref={editorHost} onFocusCapture={() => setFocusedSurface("editor")} onMouseDown={() => setFocusedSurface("editor")} onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setFocusedSurface("editor"); setEditorFontSize(v => Math.max(10, Math.min(24, v + (e.deltaY < 0 ? 1 : -1)))); } }}>
           {!active && <div className="empty-editor">Open a file or create a new one<br/><span>Ctrl+O · Ctrl+N</span></div>}
         </div>
         <div className="terminal-resize" onMouseDown={startTerminalDrag}><span/></div>
         <section className="terminal-panel" style={{ height: terminalHeight }}>
           <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
-          <div className="terminal-host" ref={terminalHost}/>
+          <div className="terminal-host" ref={terminalHost} onFocusCapture={() => setFocusedSurface("terminal")} onMouseDown={() => setFocusedSurface("terminal")} onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setFocusedSurface("terminal"); setTerminalFontSize(v => Math.max(8, Math.min(24, v + (e.deltaY < 0 ? 1 : -1)))); } }}/>
         </section>
       </section>
     </div>
