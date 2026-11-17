@@ -2,6 +2,27 @@
 
 All notable changes to Milize are documented here.
 
+## [1.0.2] - 2026-11-17
+
+### Fixed
+- Added a dedicated AppImage integration script so portable AppImage users can install a user-level desktop launcher and icon.
+- Improved the desktop entry metadata with launcher keywords, startup window matching and executable validation.
+- Corrected the Arch PKGBUILD version to match the application release.
+
+### Changed
+- Synchronized the npm, Tauri and Arch package versions at 1.0.2.
+- Updated installation documentation to distinguish portable AppImage execution from desktop-menu integration.
+- Documented user-level AppImage installation and removal.
+
+## [1.0.1] - 2026-11-17
+
+### Added
+- Published Linux AppImage and DEB release artifacts.
+- Added release automation and SHA-256 checksums.
+
+### Changed
+- Updated release metadata and installation instructions.
+
 ## [1.0.0] - 2026-11-17
 
 ### Added
@@ -24,5 +45,5 @@ All notable changes to Milize are documented here.
 - Added Arch Linux / CachyOS clone-and-run installation instructions.
 
 ### Notes
-- This is the initial 1.0.0 versioned release line. See the README for current limitations.
+- See the README for current limitations.
 - Syntax highlighting is provided; LSP, debugging and automatic unsaved-buffer recovery are not included.
