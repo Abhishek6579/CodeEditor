@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
-import { EditorState } from "@codemirror/state";
+import { EditorState, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { LanguageDescription, languages } from "@codemirror/language-data";
-import { StateEffect } from "@codemirror/state";
+import { LanguageDescription } from "@codemirror/language";
+import { languages } from "@codemirror/language-data";
 import { basicSetup } from "codemirror";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -15,7 +15,9 @@ import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, PanelLe
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
 type Entry = { name: string; path: string; is_dir: boolean };
 const base = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() || p;
-const languageFor = (name: string) => LanguageDescription.matchFilename(languages, name);
+const languageFor = (name: string) =>
+  LanguageDescription.matchFilename(languages, name) ??
+  (/\\.vh$/i.test(name) ? languages.find(language => language.name === "Verilog") : undefined);
 
 function App() {
   const [docs, setDocs] = useState<Doc[]>([]);
