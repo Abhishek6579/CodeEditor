@@ -39,7 +39,7 @@ A portable AppImage does not automatically register itself with every Linux desk
 ~~~bash
 git clone https://github.com/Abhishek6579/milize.git
 cd milize
-./scripts/integrate-appimage.sh ~/Downloads/Milize_1.0.2_amd64.AppImage
+bash scripts/integrate-appimage.sh ~/Downloads/Milize_1.0.2_amd64.AppImage
 ~~~
 
 The script copies the AppImage to `~/.local/opt/milize/`, extracts its bundled desktop entry and icon, and creates a launcher under `~/.local/share/applications/`. It does not require root. The launcher uses the installed copy, so do not delete or move that copy after integration.
