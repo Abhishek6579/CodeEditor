@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Code",
+  "version": "0.1.0",
+  "identifier": "com.abhishek.codeeditor",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{
+      "title": "Code",
+      "width": 1280,
+      "height": 820,
+      "minWidth": 820,
+      "minHeight": 600,
+      "center": true,
+      "decorations": true,
+      "backgroundColor": "#191a26"
+    }],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage"],
+    "category": "Development",
+    "shortDescription": "Minimal code editor for Linux",
+    "icon": []
+  }
+}
