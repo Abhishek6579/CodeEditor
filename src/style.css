@@ -65,7 +65,7 @@ button {
   color: var(--text);
 }
 
-.tab-icon { color: #89dceb; font-size: 11px; }
+.tab-icon { color: var(--accent); font-size: 11px; }
 .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tab-close {
   color: var(--subtle);
@@ -75,13 +75,13 @@ button {
   opacity: 0;
 }
 .tab:hover .tab-close, .tab.active .tab-close { opacity: 1; }
-.tab-close:hover { color: #f38ba8; }
+.tab-close:hover { color: var(--accent-alt); }
 .dirty {
   width: 6px;
   height: 6px;
   flex: none;
   border-radius: 50%;
-  background: #f9e2af;
+  background: var(--accent);
 }
 .tabs-fill { flex: 1; }
 .tab-action {
@@ -232,7 +232,7 @@ button {
 .cm-content { min-height: 100%; }
 .cm-tooltip-autocomplete {
   background: var(--panel) !important;
-  border: 1px solid #485066 !important;
+  border: 1px solid var(--border) !important;
 }
 .empty-editor {
   position: absolute;
@@ -288,7 +288,7 @@ button {
   font-size: 10px;
   letter-spacing: .08em;
 }
-.terminal-state { color: #a6e3a1; font-size: 9px; }
+.terminal-state { color: var(--accent); font-size: 9px; }
 .terminal-host {
   flex: 1;
   min-height: 0;
