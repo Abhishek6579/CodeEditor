@@ -129,11 +129,16 @@ const themePresets: Record<Exclude<ThemeId, "default">, EditorTheme> = {
 // "Default" preserves Milize's original Catppuccin Mocha appearance.
 export const themes: Record<ThemeId, EditorTheme> = {
   ...themePresets,
-  default: {
-    ...themePresets.catppuccin,
-    name: "Default",
-    description: "Milize's original dark appearance"
-  }
+  default: makeTheme("Default", "Compact Neovim-inspired midnight palette", {
+    bg:"#1d1f2f", panel:"#1b1e2b", panelAlt:"#171a27", editor:"#1d1f2f", terminal:"#171a27",
+    border:"#292d42", text:"#c4c9df", muted:"#929ab6", subtle:"#626b86", accent:"#d58b73",
+    accentAlt:"#9aa9e8", hover:"#252a40", selection:"#303d70", activeLine:"#292d45",
+    gutter:"#1d1f2f", gutterActive:"#30334a", cursor:"#d7d9e8"
+  }, {
+    comment:"#626b86", string:"#b5ce8b", number:"#e69a78", keyword:"#d18db5",
+    function:"#83c5d0", definition:"#c6a0d8", constant:"#e6a078", type:"#e3c18b",
+    property:"#9bb4e6", operator:"#a9b5d5", tag:"#e18e9b", regexp:"#c6a0d8"
+  }, ["#34384f","#e18e9b","#b5ce8b","#e3c18b","#83a9df","#c6a0d8","#83c5d0","#c4c9df","#626b86","#e18e9b","#b5ce8b","#e3c18b","#83a9df","#c6a0d8","#83c5d0","#e8e9f2"])
 };
 
 export const themeIds = ["default", ...Object.keys(themePresets)] as ThemeId[];
