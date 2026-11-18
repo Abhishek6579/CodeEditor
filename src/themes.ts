@@ -1,4 +1,4 @@
-export type ThemeId = "default" | "catppuccin" | "tokyo-night" | "github-dark" | "dracula" | "one-dark-pro" | "one-monokai" | "ayu-dark";
+export type ThemeId = "default" | "catppuccin" | "tokyo-night" | "github-dark" | "dracula" | "one-dark-pro" | "one-monokai" | "ayu-dark" | "nord" | "gruvbox-dark";
 
 export type EditorTheme = {
   name: string;
@@ -103,7 +103,27 @@ const themePresets: Record<Exclude<ThemeId, "default">, EditorTheme> = {
     comment:"#5c6773", string:"#aad94c", number:"#ffb454", keyword:"#ff8f40",
     function:"#ffb454", definition:"#59c2ff", constant:"#d2a6ff", type:"#59c2ff",
     property:"#39bae6", operator:"#f29668", tag:"#f07178", regexp:"#95e6cb"
-  }, ["#131721","#f07178","#aad94c","#e6b450","#59c2ff","#d2a6ff","#95e6cb","#bfbdb6","#565b66","#f07178","#c2d94c","#ffb454","#73d0ff","#dfbfff","#95e6cb","#f3f4f5"])
+  }, ["#131721","#f07178","#aad94c","#e6b450","#59c2ff","#d2a6ff","#95e6cb","#bfbdb6","#565b66","#f07178","#c2d94c","#ffb454","#73d0ff","#dfbfff","#95e6cb","#f3f4f5"]),
+  "nord": makeTheme("Nord", "Arctic blue-grey palette with restrained contrast", {
+    bg:"#2e3440", panel:"#272c36", panelAlt:"#242933", editor:"#2e3440", terminal:"#242933",
+    border:"#434c5e", text:"#eceff4", muted:"#d8dee9", subtle:"#7b88a1", accent:"#88c0d0",
+    accentAlt:"#b48ead", hover:"#3b4252", selection:"#434c5e", activeLine:"#353c4a",
+    gutter:"#272c36", gutterActive:"#434c5e", cursor:"#d8dee9"
+  }, {
+    comment:"#7b88a1", string:"#a3be8c", number:"#b48ead", keyword:"#81a1c1",
+    function:"#88c0d0", definition:"#8fbcbb", constant:"#d08770", type:"#8fbcbb",
+    property:"#88c0d0", operator:"#81a1c1", tag:"#bf616a", regexp:"#a3be8c"
+  }, ["#3b4252","#bf616a","#a3be8c","#ebcb8b","#81a1c1","#b48ead","#88c0d0","#e5e9f0","#4c566a","#bf616a","#a3be8c","#ebcb8b","#81a1c1","#b48ead","#8fbcbb","#eceff4"]),
+  "gruvbox-dark": makeTheme("Gruvbox Dark", "Warm retro dark palette with earthy syntax colors", {
+    bg:"#282828", panel:"#1d2021", panelAlt:"#1d2021", editor:"#282828", terminal:"#1d2021",
+    border:"#504945", text:"#ebdbb2", muted:"#d5c4a1", subtle:"#928374", accent:"#fabd2f",
+    accentAlt:"#d3869b", hover:"#3c3836", selection:"#504945", activeLine:"#32302f",
+    gutter:"#1d2021", gutterActive:"#504945", cursor:"#ebdbb2"
+  }, {
+    comment:"#928374", string:"#b8bb26", number:"#d3869b", keyword:"#fb4934",
+    function:"#fabd2f", definition:"#8ec07c", constant:"#d3869b", type:"#83a598",
+    property:"#8ec07c", operator:"#fe8019", tag:"#fb4934", regexp:"#b8bb26"
+  }, ["#282828","#cc241d","#98971a","#d79921","#458588","#b16286","#689d6a","#a89984","#928374","#fb4934","#b8bb26","#fabd2f","#83a598","#d3869b","#8ec07c","#ebdbb2"])
 };
 
 // "Default" preserves Milize's original Catppuccin Mocha appearance.
