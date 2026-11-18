@@ -11,7 +11,8 @@ import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FileSpreadsheet, FileVideo, FileAudio, FileTerminal, FileType, FileCog, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FileSpreadsheet, FileVideo, FileAudio, FileTerminal, FileType, FileCog, PanelLeftClose, PanelLeftOpen, Settings, Check } from "lucide-react";
+import { themes, themeIds, type ThemeId, type EditorTheme } from "./themes";
 import type { LucideIcon } from "lucide-react";
 
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
@@ -41,35 +42,40 @@ const fileIconFor = (filename: string): { Icon: LucideIcon; color: string } => {
   return { Icon: File, color: "#a6adc8" };
 };
 
-const catppuccinHighlight = HighlightStyle.define([
-  { tag: tags.comment, color: "#6c7086", fontStyle: "italic" },
-  { tag: [tags.string, tags.docString, tags.character, tags.attributeValue], color: "#a6e3a1" },
-  { tag: [tags.number, tags.integer, tags.float, tags.bool], color: "#fab387" },
-  { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword, tags.operatorKeyword], color: "#cba6f7" },
 
-  // Declarations and references: keep these more specific rules ahead of the
-  // general identifier rule so they remain visually distinct.
-  { tag: tags.definition(tags.function(tags.variableName)), color: "#89b4fa", fontWeight: "bold" },
-  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: "#89b4fa" },
-  { tag: tags.definition(tags.variableName), color: "#cba6f7", fontWeight: "bold" },
-  { tag: tags.constant(tags.variableName), color: "#fab387" },
-  { tag: tags.standard(tags.variableName), color: "#94e2d5" },
-  { tag: tags.special(tags.variableName), color: "#f38ba8" },
-  { tag: tags.local(tags.variableName), color: "#cdd6f4", fontWeight: "bold" },
-  { tag: [tags.variableName, tags.self], color: "#cdd6f4" },
-
-  { tag: [tags.typeName, tags.className], color: "#f9e2af" },
-  { tag: tags.namespace, color: "#cba6f7" },
-  { tag: [tags.propertyName, tags.attributeName], color: "#89dceb" },
-  { tag: [tags.macroName, tags.annotation, tags.meta], color: "#fab387" },
-  { tag: [tags.operator, tags.punctuation, tags.separator], color: "#94e2d5" },
-  { tag: [tags.tagName], color: "#f38ba8" },
-  { tag: [tags.regexp, tags.escape], color: "#f5c2e7" },
-  { tag: [tags.heading, tags.heading1, tags.heading2, tags.heading3], color: "#89b4fa", fontWeight: "bold" },
-  { tag: [tags.invalid], color: "#f38ba8", textDecoration: "underline wavy" }
+const createHighlightStyle = (theme: EditorTheme) => HighlightStyle.define([
+  { tag: tags.comment, color: theme.syntax.comment, fontStyle: "italic" },
+  { tag: [tags.string, tags.docString, tags.character, tags.attributeValue], color: theme.syntax.string },
+  { tag: [tags.number, tags.integer, tags.float, tags.bool], color: theme.syntax.number },
+  { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword, tags.operatorKeyword], color: theme.syntax.keyword },
+  { tag: tags.definition(tags.function(tags.variableName)), color: theme.syntax.function, fontWeight: "bold" },
+  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: theme.syntax.function },
+  { tag: tags.definition(tags.variableName), color: theme.syntax.definition, fontWeight: "bold" },
+  { tag: tags.constant(tags.variableName), color: theme.syntax.constant },
+  { tag: tags.standard(tags.variableName), color: theme.syntax.property },
+  { tag: tags.special(tags.variableName), color: theme.syntax.tag },
+  { tag: tags.local(tags.variableName), color: "var(--text)", fontWeight: "bold" },
+  { tag: [tags.variableName, tags.self], color: "var(--text)" },
+  { tag: [tags.typeName, tags.className], color: theme.syntax.type },
+  { tag: tags.namespace, color: theme.syntax.keyword },
+  { tag: [tags.propertyName, tags.attributeName], color: theme.syntax.property },
+  { tag: [tags.macroName, tags.annotation, tags.meta], color: theme.syntax.number },
+  { tag: [tags.operator, tags.punctuation, tags.separator], color: theme.syntax.operator },
+  { tag: tags.tagName, color: theme.syntax.tag },
+  { tag: [tags.regexp, tags.escape], color: theme.syntax.regexp },
+  { tag: [tags.heading, tags.heading1, tags.heading2, tags.heading3], color: theme.syntax.function, fontWeight: "bold" },
+  { tag: tags.invalid, color: theme.syntax.tag, textDecoration: "underline wavy" }
 ]);
 
+
 function App() {
+  const [themeId, setThemeId] = useState<ThemeId>(() => {
+    const saved = localStorage.getItem("milize.theme.v1") as ThemeId | null;
+    return saved && themes[saved] ? saved : "catppuccin";
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const currentTheme = themes[themeId];
+  const highlightStyle = createHighlightStyle(currentTheme);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [root, setRoot] = useState<string | null>(null);
@@ -99,6 +105,21 @@ function App() {
   docsRef.current = docs;
   activeIdRef.current = activeId;
   const active = docs.find(d => d.id === activeId) ?? null;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const c = currentTheme.colors;
+    const vars: Record<string, string> = {
+      "--bg": c.bg, "--panel": c.panel, "--panel-alt": c.panelAlt, "--editor": c.editor,
+      "--terminal": c.terminal, "--border": c.border, "--text": c.text, "--muted": c.muted,
+      "--subtle": c.subtle, "--accent": c.accent, "--accent-alt": c.accentAlt,
+      "--hover": c.hover, "--selection": c.selection, "--active-line": c.activeLine,
+      "--gutter": c.gutter, "--gutter-active": c.gutterActive, "--cursor": c.cursor
+    };
+    Object.entries(vars).forEach(([key, value]) => root.style.setProperty(key, value));
+    root.dataset.theme = themeId;
+    localStorage.setItem("milize.theme.v1", themeId);
+  }, [themeId, currentTheme]);
 
   const patchDoc = useCallback((id: number, patch: Partial<Doc>) => {
     setDocs(old => old.map(d => d.id === id ? { ...d, ...patch } : d));
@@ -238,22 +259,22 @@ function App() {
     const state = EditorState.create({
       doc: active.content,
       extensions: [
-        basicSetup, EditorView.lineWrapping, syntaxHighlighting(catppuccinHighlight),
+        basicSetup, EditorView.lineWrapping, syntaxHighlighting(highlightStyle),
         EditorView.theme({
-          "&": { height: "100%", backgroundColor: "#1e1e2e", color: "#cdd6f4", fontSize: editorFontSize + "px" },
-          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "12px 0", caretColor: "#f5e0dc" },
+          "&": { height: "100%", backgroundColor: "var(--editor)", color: "var(--text)", fontSize: editorFontSize + "px" },
+          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "12px 0", caretColor: "var(--cursor)" },
           ".cm-line": { paddingLeft: "4px" },
-          ".cm-gutters": { backgroundColor: "#181825", color: "#6c7086", border: "none", minWidth: "48px" },
-          ".cm-activeLineGutter": { backgroundColor: "#313244", color: "#b4befe" },
-          ".cm-activeLine": { backgroundColor: "#242438" },
-          ".cm-cursor": { borderLeftColor: "#f5e0dc" },
-          ".cm-selectionBackground, ::selection": { backgroundColor: "#45475a !important" },
-          ".cm-focused .cm-selectionBackground": { backgroundColor: "#45475a" },
-          ".cm-tooltip": { backgroundColor: "#313244", border: "1px solid #585b70", color: "#cdd6f4" },
-          ".cm-tooltip-autocomplete ul li[aria-selected]": { backgroundColor: "#45475a", color: "#cdd6f4" },
-          ".cm-panels": { backgroundColor: "#181825", color: "#cdd6f4" },
-          ".cm-searchMatch": { backgroundColor: "#f9e2af55", outline: "1px solid #f9e2af" },
-          ".cm-searchMatch-selected": { backgroundColor: "#f9e2af88" }
+          ".cm-gutters": { backgroundColor: "var(--gutter)", color: "var(--subtle)", border: "none", minWidth: "48px" },
+          ".cm-activeLineGutter": { backgroundColor: "var(--gutter-active)", color: "var(--accent)" },
+          ".cm-activeLine": { backgroundColor: "var(--active-line)" },
+          ".cm-cursor": { borderLeftColor: "var(--cursor)" },
+          ".cm-selectionBackground, ::selection": { backgroundColor: "var(--selection) !important" },
+          ".cm-focused .cm-selectionBackground": { backgroundColor: "var(--selection)" },
+          ".cm-tooltip": { backgroundColor: "var(--panel)", border: "1px solid var(--border)", color: "var(--text)" },
+          ".cm-tooltip-autocomplete ul li[aria-selected]": { backgroundColor: "var(--selection)", color: "var(--text)" },
+          ".cm-panels": { backgroundColor: "var(--panel)", color: "var(--text)" },
+          ".cm-searchMatch": { backgroundColor: "var(--accent)55", outline: "1px solid var(--accent)" },
+          ".cm-searchMatch-selected": { backgroundColor: "var(--accent)88" }
         }),
         EditorView.updateListener.of(update => {
           if (update.docChanged) patchDoc(activeId!, { content: update.state.doc.toString(), dirty: true });
@@ -288,13 +309,13 @@ function App() {
     return () => { alive = false; view.destroy(); if (editor.current === view) editor.current = null; };
   // A fresh CodeMirror state is created when switching tabs or changing editor zoom.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId, editorFontSize, workspaceRestored]);
+  }, [activeId, editorFontSize, workspaceRestored, themeId]);
 
   useEffect(() => {
     if (!workspaceRestored || !terminalHost.current || terminal.current) return;
     const term = new Terminal({
       cursorBlink: true, fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", fontSize: terminalFontSize,
-      theme: { background: "#11111b", foreground: "#cdd6f4", cursor: "#f5e0dc", cursorAccent: "#11111b", selectionBackground: "#45475a", black: "#181825", red: "#f38ba8", green: "#a6e3a1", yellow: "#f9e2af", blue: "#89b4fa", magenta: "#cba6f7", cyan: "#89dceb", white: "#bac2de", brightBlack: "#585b70", brightRed: "#f38ba8", brightGreen: "#a6e3a1", brightYellow: "#f9e2af", brightBlue: "#89b4fa", brightMagenta: "#cba6f7", brightCyan: "#89dceb", brightWhite: "#a6adc8" }
+      theme: currentTheme.terminal
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
@@ -315,6 +336,10 @@ function App() {
       void invoke("terminal_close"); setTerminalReady(false);
     };
   }, [workspaceRestored]);
+
+  useEffect(() => {
+    if (terminal.current) terminal.current.options.theme = currentTheme.terminal;
+  }, [themeId, currentTheme]);
 
   useEffect(() => {
     if (terminal.current) terminal.current.options.fontSize = terminalFontSize;
@@ -393,6 +418,23 @@ function App() {
             <span className="tree-icon">{root ? <FolderOpen size={15} color="#89b4fa" /> : <Folder size={15} color="#89b4fa" />}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
           </div>
           {root && tree[root] ? <div className="tree-list">{renderTree(tree[root])}</div> : <div className="empty-tree">Ctrl+Shift+O<br/>to open a folder</div>}
+          <div className="explorer-footer">
+            {settingsOpen && <div className="theme-picker" role="dialog" aria-label="Choose color theme">
+              <div className="theme-picker-heading"><span>COLOR THEME</span><span>{Object.keys(themes).length} themes</span></div>
+              {themeIds.map(id => {
+                const theme = themes[id];
+                const selected = themeId === id;
+                return <button key={id} className={"theme-option " + (selected ? "selected" : "")} onClick={() => setThemeId(id)} aria-pressed={selected}>
+                  <span className="theme-swatches"><i style={{background:theme.colors.bg}}/><i style={{background:theme.colors.accent}}/><i style={{background:theme.syntax.string}}/><i style={{background:theme.syntax.keyword}}/></span>
+                  <span className="theme-option-copy"><strong>{theme.name}</strong><small>{theme.description}</small></span>
+                  {selected && <Check size={15} className="theme-check"/>}
+                </button>;
+              })}
+            </div>}
+            <button className={"explorer-settings " + (settingsOpen ? "open" : "")} title="Appearance and themes" aria-label="Appearance and themes" aria-expanded={settingsOpen} onClick={() => setSettingsOpen(value => !value)}>
+              <Settings size={16}/>
+            </button>
+          </div>
         </aside>
         <div className="sidebar-resize" onMouseDown={startSidebarDrag} title="Drag to resize explorer"><span/></div>
       </>}
