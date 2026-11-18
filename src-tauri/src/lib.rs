@@ -61,26 +61,44 @@ fn start_terminal(app: AppHandle, state: State<'_, TerminalState>, cwd: Option<S
         "zsh" => { cmd.arg("--no-rcs"); }
         _ => {}
     }
-    // Do not leak AppImage's bundled libraries into programs launched by the
-    // integrated terminal. Doing so can make system tools (notably git/curl)
-    // load incompatible libraries from the mounted AppImage.
-    for variable in ["LD_LIBRARY_PATH", "LD_PRELOAD", "LD_AUDIT"] {
-        if let Some(value) = std::env::var_os(variable) {
-            let app_dir = std::env::var_os("APPDIR").map(PathBuf::from);
-            let paths: Vec<PathBuf> = std::env::split_paths(&value)
-                .filter(|path| {
-                    let inside_appimage = app_dir.as_ref().is_some_and(|dir| path.starts_with(dir));
-                    let in_mount = path.components().any(|component| {
-                        component.as_os_str().to_str().is_some_and(|part| part.starts_with(".mount_"))
-                    });
-                    !inside_appimage && !in_mount
-                })
-                .collect();
+    // Keep AppImage's private loader paths out of the integrated shell and
+    // programs it launches. Do not change Milize's own process environment.
+    #[cfg(target_os = "linux")]
+    {
+        let app_dir = std::env::var_os("APPDIR").map(PathBuf::from);
+        let is_appimage_path = |path: &std::path::Path| {
+            let inside_appdir = app_dir.as_ref().is_some_and(|dir| path.starts_with(dir));
+            let inside_mount = path.components().any(|component| {
+                component.as_os_str().to_str().is_some_and(|part| part.starts_with(".mount_"))
+            });
+            inside_appdir || inside_mount
+        };
 
+        if let Some(value) = std::env::var_os("LD_LIBRARY_PATH") {
+            let paths = std::env::split_paths(&value)
+                .filter(|path| !is_appimage_path(path))
+                .collect::<Vec<_>>();
             if paths.is_empty() {
-                cmd.env_remove(variable);
+                cmd.env_remove("LD_LIBRARY_PATH");
             } else if let Ok(cleaned) = std::env::join_paths(paths) {
-                cmd.env(variable, cleaned);
+                cmd.env("LD_LIBRARY_PATH", cleaned);
+            }
+        }
+
+        // The loader treats LD_PRELOAD and LD_AUDIT as whitespace/colon
+        // separated lists, not as PATH-style lists.
+        for variable in ["LD_PRELOAD", "LD_AUDIT"] {
+            if let Some(value) = std::env::var(variable).ok() {
+                let entries = value
+                    .split(|character: char| character.is_whitespace() || character == ':')
+                    .filter(|entry| !entry.is_empty())
+                    .filter(|entry| !is_appimage_path(std::path::Path::new(entry)))
+                    .collect::<Vec<_>>();
+                if entries.is_empty() {
+                    cmd.env_remove(variable);
+                } else {
+                    cmd.env(variable, entries.join(" "));
+                }
             }
         }
     }
