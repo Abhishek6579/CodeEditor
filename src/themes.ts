@@ -1,4 +1,4 @@
-export type ThemeId = "catppuccin" | "tokyo-night" | "github-dark" | "dracula" | "one-dark-pro" | "one-monokai" | "ayu-dark";
+export type ThemeId = "default" | "catppuccin" | "tokyo-night" | "github-dark" | "dracula" | "one-dark-pro" | "one-monokai" | "ayu-dark";
 
 export type EditorTheme = {
   name: string;
@@ -33,7 +33,7 @@ const makeTheme = (
   }
 });
 
-export const themes: Record<ThemeId, EditorTheme> = {
+const themePresets: Record<Exclude<ThemeId, "default">, EditorTheme> = {
   "catppuccin": makeTheme("Catppuccin Mocha", "Soothing pastel dark theme", {
     bg:"#1e1e2e", panel:"#181825", panelAlt:"#11111b", editor:"#1e1e2e", terminal:"#11111b",
     border:"#313244", text:"#cdd6f4", muted:"#a6adc8", subtle:"#6c7086", accent:"#b4befe",
@@ -106,4 +106,14 @@ export const themes: Record<ThemeId, EditorTheme> = {
   }, ["#131721","#f07178","#aad94c","#e6b450","#59c2ff","#d2a6ff","#95e6cb","#bfbdb6","#565b66","#f07178","#c2d94c","#ffb454","#73d0ff","#dfbfff","#95e6cb","#f3f4f5"])
 };
 
-export const themeIds = Object.keys(themes) as ThemeId[];
+// "Default" preserves Milize's original Catppuccin Mocha appearance.
+export const themes: Record<ThemeId, EditorTheme> = {
+  ...themePresets,
+  default: {
+    ...themePresets.catppuccin,
+    name: "Default",
+    description: "Milize's original dark appearance"
+  }
+};
+
+export const themeIds = ["default", ...Object.keys(themePresets)] as ThemeId[];
