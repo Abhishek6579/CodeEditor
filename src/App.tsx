@@ -12,7 +12,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FileSpreadsheet, FileVideo, FileAudio, FileTerminal, FileType, FileCog, PanelLeftClose, PanelLeftOpen, Settings, Check } from "lucide-react";
-import { themes, themeIds, type ThemeId, type EditorTheme } from "./themes";
+import { themes, themeIds, type ThemeId } from "./themes";
 import type { LucideIcon } from "lucide-react";
 
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
@@ -273,8 +273,8 @@ function App() {
           ".cm-tooltip": { backgroundColor: "var(--panel)", border: "1px solid var(--border)", color: "var(--text)" },
           ".cm-tooltip-autocomplete ul li[aria-selected]": { backgroundColor: "var(--selection)", color: "var(--text)" },
           ".cm-panels": { backgroundColor: "var(--panel)", color: "var(--text)" },
-          ".cm-searchMatch": { backgroundColor: "var(--accent)55", outline: "1px solid var(--accent)" },
-          ".cm-searchMatch-selected": { backgroundColor: "var(--accent)88" }
+          ".cm-searchMatch": { backgroundColor: "color-mix(in srgb, var(--accent) 33%, transparent)", outline: "1px solid var(--accent)" },
+          ".cm-searchMatch-selected": { backgroundColor: "color-mix(in srgb, var(--accent) 53%, transparent)" }
         }),
         EditorView.updateListener.of(update => {
           if (update.docChanged) patchDoc(activeId!, { content: update.state.doc.toString(), dirty: true });
