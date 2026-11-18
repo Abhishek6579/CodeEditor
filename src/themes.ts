@@ -1,4 +1,4 @@
-export type ThemeId = "default" | "catppuccin" | "tokyo-night" | "github-dark" | "dracula" | "one-dark-pro" | "one-monokai" | "ayu-dark";
+export type ThemeId = "default" | "catppuccin" | "tokyo-night" | "github-dark" | "dracula" | "one-dark-pro" | "one-monokai" | "ayu-dark" | "min-dark" | "monokai-night";
 
 export type EditorTheme = {
   name: string;
@@ -104,6 +104,28 @@ const themePresets: Record<Exclude<ThemeId, "default">, EditorTheme> = {
     function:"#ffb454", definition:"#59c2ff", constant:"#d2a6ff", type:"#59c2ff",
     property:"#39bae6", operator:"#f29668", tag:"#f07178", regexp:"#95e6cb"
   }, ["#131721","#f07178","#aad94c","#e6b450","#59c2ff","#d2a6ff","#95e6cb","#bfbdb6","#565b66","#f07178","#c2d94c","#ffb454","#73d0ff","#dfbfff","#95e6cb","#f3f4f5"])
+  ,
+  "min-dark": makeTheme("Min Dark", "Minimal monochrome dark theme by Miguel Solorio", {
+    bg:"#1f1f1f", panel:"#1a1a1a", panelAlt:"#151515", editor:"#1f1f1f", terminal:"#1a1a1a",
+    border:"#2a2a2a", text:"#e0e0e0", muted:"#888888", subtle:"#6b737c", accent:"#b392f0",
+    accentAlt:"#79b8ff", hover:"#262626", selection:"#383838", activeLine:"#242424",
+    gutter:"#1a1a1a", gutterActive:"#383838", cursor:"#f2f2f2"
+  }, {
+    comment:"#6b737c", string:"#9db1c5", number:"#f8f8f8", keyword:"#f97583",
+    function:"#b392f0", definition:"#b392f0", constant:"#79b8ff", type:"#b392f0",
+    property:"#79b8ff", operator:"#bbbbbb", tag:"#f97583", regexp:"#ffab70"
+  }, ["#1a1a1a","#f97583","#6b9b65","#b392f0","#79b8ff","#b392f0","#9db1c5","#e0e0e0","#5c5c5c","#ff7a84","#79b8ff","#ff9800","#79b8ff","#b392f0","#9db1c5","#fafafa"]),
+  "monokai-night": makeTheme("Monokai Night", "Dark, minimalistic Monokai-inspired theme by Fabio Spampinato", {
+    bg:"#1f1f1f", panel:"#161616", panelAlt:"#0f0f0f", editor:"#1f1f1f", terminal:"#262626",
+    border:"#161616", text:"#dddddd", muted:"#888888", subtle:"#666666", accent:"#007acc",
+    accentAlt:"#ae81ff", hover:"#262626", selection:"#464646", activeLine:"#292929",
+    gutter:"#1f1f1f", gutterActive:"#363636", cursor:"#f2f2f2"
+  }, {
+    comment:"#75715e", string:"#e6db74", number:"#ae81ff", keyword:"#f92672",
+    function:"#a6e22e", definition:"#a6e22e", constant:"#ae81ff", type:"#66d9ef",
+    property:"#fd971f", operator:"#f92672", tag:"#f92672", regexp:"#e6db74"
+  }, ["#333333","#c4265e","#86b42b","#b3b42b","#6a7ec8","#8c6bc8","#56adbc","#e3e3dd","#666666","#f92672","#a6e22e","#e2e22e","#819aff","#ae81ff","#66d9ef","#f8f8f2"])
+
 };
 
 // "Default" preserves Milize's original Catppuccin Mocha appearance.
