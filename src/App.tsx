@@ -389,7 +389,7 @@ function App() {
         <span className="tree-arrow">{entry.is_dir ? (expanded.has(entry.path) ? <ChevronDown size={12} /> : <ChevronRight size={12} />) : null}</span>
         <span className="tree-icon">
           {entry.is_dir
-            ? (expanded.has(entry.path) ? <FolderOpen size={15} color="#89b4fa" /> : <Folder size={15} color="#89b4fa" />)
+            ? (expanded.has(entry.path) ? <FolderOpen size={15} color="var(--accent)" /> : <Folder size={15} color="#89b4fa" />)
             : (() => { const { Icon, color } = fileIconFor(entry.name); return <Icon size={14} color={color} strokeWidth={1.8} />; })()}
         </span>
         <span className="tree-name">{entry.name}</span>
