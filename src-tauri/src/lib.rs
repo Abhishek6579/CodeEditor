@@ -61,6 +61,30 @@ fn start_terminal(app: AppHandle, state: State<'_, TerminalState>, cwd: Option<S
         "zsh" => { cmd.arg("--no-rcs"); }
         _ => {}
     }
+    // Do not leak AppImage's bundled libraries into programs launched by the
+    // integrated terminal. Doing so can make system tools (notably git/curl)
+    // load incompatible libraries from the mounted AppImage.
+    for variable in ["LD_LIBRARY_PATH", "LD_PRELOAD", "LD_AUDIT"] {
+        if let Some(value) = std::env::var_os(variable) {
+            let app_dir = std::env::var_os("APPDIR").map(PathBuf::from);
+            let paths: Vec<PathBuf> = std::env::split_paths(&value)
+                .filter(|path| {
+                    let inside_appimage = app_dir.as_ref().is_some_and(|dir| path.starts_with(dir));
+                    let in_mount = path.components().any(|component| {
+                        component.as_os_str().to_str().is_some_and(|part| part.starts_with(".mount_"))
+                    });
+                    !inside_appimage && !in_mount
+                })
+                .collect();
+
+            if paths.is_empty() {
+                cmd.env_remove(variable);
+            } else if let Ok(cleaned) = std::env::join_paths(paths) {
+                cmd.env(variable, cleaned);
+            }
+        }
+    }
+
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
     let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
