@@ -12,7 +12,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { ChevronDown, ChevronRight, Folder, FolderOpen, File, FileCode2, FileJson, FileText, FileImage, FileArchive, FileSpreadsheet, FileVideo, FileAudio, FileTerminal, FileType, FileCog, PanelLeftClose, PanelLeftOpen, Settings, Check } from "lucide-react";
-import { themes, themeIds, type ThemeId } from "./themes";
+import { themes, themeIds, type ThemeId, type EditorTheme } from "./themes";
 import type { LucideIcon } from "lucide-react";
 
 type Doc = { id: number; path: string | null; name: string; content: string; dirty: boolean };
@@ -70,8 +70,12 @@ const createHighlightStyle = (theme: EditorTheme) => HighlightStyle.define([
 
 function App() {
   const [themeId, setThemeId] = useState<ThemeId>(() => {
-    const saved = localStorage.getItem("milize.theme.v1") as ThemeId | null;
-    return saved && themes[saved] ? saved : "catppuccin";
+    try {
+      const saved = localStorage.getItem("milize.theme.v1") as ThemeId | null;
+      return saved && themes[saved] ? saved : "default";
+    } catch {
+      return "default";
+    }
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const currentTheme = themes[themeId];
@@ -118,7 +122,11 @@ function App() {
     };
     Object.entries(vars).forEach(([key, value]) => root.style.setProperty(key, value));
     root.dataset.theme = themeId;
-    localStorage.setItem("milize.theme.v1", themeId);
+    try {
+      localStorage.setItem("milize.theme.v1", themeId);
+    } catch (error) {
+      console.warn("Could not persist color theme:", error);
+    }
   }, [themeId, currentTheme]);
 
   const patchDoc = useCallback((id: number, patch: Partial<Doc>) => {
