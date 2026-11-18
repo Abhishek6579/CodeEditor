@@ -271,7 +271,7 @@ function App() {
         basicSetup, EditorView.lineWrapping, syntaxHighlighting(highlightStyle),
         EditorView.theme({
           "&": { height: "100%", backgroundColor: "var(--editor)", color: "var(--text)", fontSize: editorFontSize + "px" },
-          ".cm-content": { fontFamily: "'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Iosevka Term', monospace", padding: "8px 0", caretColor: "var(--cursor)" },
+          ".cm-content": { fontFamily: "'JetBrainsMono Nerd Font', 'JetBrainsMono Nerd Font', 'JetBrains Mono', 'Iosevka Term', monospace", padding: "8px 0", caretColor: "var(--cursor)" },
           ".cm-line": { paddingLeft: "4px" },
           ".cm-gutters": { backgroundColor: "var(--gutter)", color: "var(--subtle)", border: "none", minWidth: "40px" },
           ".cm-activeLineGutter": { backgroundColor: "var(--gutter-active)", color: "var(--accent)" },
