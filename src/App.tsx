@@ -90,11 +90,12 @@ function App() {
   const [tree, setTree] = useState<Record<string, Entry[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [terminalHeight, setTerminalHeight] = useState(210);
-  const [sidebarWidth, setSidebarWidth] = useState(246);
+  const [terminalVisible, setTerminalVisible] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(220);
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [terminalReady, setTerminalReady] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
-  const [editorFontSize, setEditorFontSize] = useState(14);
+  const [editorFontSize, setEditorFontSize] = useState(12);
   const [terminalFontSize, setTerminalFontSize] = useState(13);
   const [focusedSurface, setFocusedSurface] = useState<"editor" | "terminal">("editor");
   const [status, setStatus] = useState("Ready");
@@ -270,9 +271,9 @@ function App() {
         basicSetup, EditorView.lineWrapping, syntaxHighlighting(highlightStyle),
         EditorView.theme({
           "&": { height: "100%", backgroundColor: "var(--editor)", color: "var(--text)", fontSize: editorFontSize + "px" },
-          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "12px 0", caretColor: "var(--cursor)" },
+          ".cm-content": { fontFamily: "'JetBrains Mono', 'Iosevka Term', monospace", padding: "8px 0", caretColor: "var(--cursor)" },
           ".cm-line": { paddingLeft: "4px" },
-          ".cm-gutters": { backgroundColor: "var(--gutter)", color: "var(--subtle)", border: "none", minWidth: "48px" },
+          ".cm-gutters": { backgroundColor: "var(--gutter)", color: "var(--subtle)", border: "none", minWidth: "40px" },
           ".cm-activeLineGutter": { backgroundColor: "var(--gutter-active)", color: "var(--accent)" },
           ".cm-activeLine": { backgroundColor: "var(--active-line)" },
           ".cm-cursor": { borderLeftColor: "var(--cursor)" },
@@ -362,7 +363,7 @@ function App() {
       else if (mod && e.key.toLowerCase() === "o") { e.preventDefault(); void openFile(); }
       if (mod && e.key.toLowerCase() === "n") { e.preventDefault(); newFile(); }
       if (mod && e.key.toLowerCase() === "w") { e.preventDefault(); if (activeIdRef.current !== null) closeDoc(activeIdRef.current); }
-      if (mod && e.key === "`") { e.preventDefault(); terminal.current?.focus(); }
+      if (mod && e.key === "`") { e.preventDefault(); setTerminalVisible(v => !v); }
       if (mod && (e.key === "=" || e.key === "+")) {
         e.preventDefault();
         if (focusedSurface === "terminal") setTerminalFontSize(v => Math.min(24, v + 1));
@@ -376,7 +377,7 @@ function App() {
       if (mod && e.key === "0") {
         e.preventDefault();
         if (focusedSurface === "terminal") setTerminalFontSize(13);
-        else setEditorFontSize(14);
+        else setEditorFontSize(12);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -410,7 +411,7 @@ function App() {
   const startSidebarDrag = (e: ReactMouseEvent) => { e.preventDefault(); drag.current = "sidebar"; };
 
   return <main className="app-shell">
-    <div className="tabs">
+    <div className={"tabs " + (docs.length <= 1 ? "tabs-hidden" : "")}>
       {docs.map(doc => <div key={doc.id} className={"tab " + (doc.id === activeId ? "active" : "")} onClick={() => setActiveId(doc.id)}>
         <span className="tab-icon">{doc.name.endsWith(".sv") || doc.name.endsWith(".v") ? "◆" : "▤"}</span>
         <span className="tab-name">{doc.name}</span>{doc.dirty && <i className="dirty"/>}
@@ -422,6 +423,7 @@ function App() {
     <div className="workspace">
       {sidebarVisible && <>
         <aside className="explorer" style={{ width: sidebarWidth }}>
+          <div className="explorer-heading"><span className="explorer-heading-rule"/><span>Explorer</span><span className="explorer-count">{root && tree[root] ? `${tree[root].length}/${tree[root].length}` : "0/0"}</span></div>
           <div className="explorer-root" title={root ?? "Open a folder"} onClick={() => void openFolder()}>
             <span className="tree-icon">{root ? <FolderOpen size={15} color="#89b4fa" /> : <Folder size={15} color="#89b4fa" />}</span><span className="root-name">{root ? base(root) : "OPEN FOLDER"}</span>
           </div>
@@ -450,14 +452,16 @@ function App() {
         <div className="editor-host" ref={editorHost} onFocusCapture={() => setFocusedSurface("editor")} onMouseDown={() => setFocusedSurface("editor")} onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setFocusedSurface("editor"); setEditorFontSize(v => Math.max(10, Math.min(24, v + (e.deltaY < 0 ? 1 : -1)))); } }}>
           {!active && <div className="empty-editor">Open a file or create a new one<br/><span>Ctrl+O · Ctrl+N</span></div>}
         </div>
-        <div className="terminal-resize" onMouseDown={startTerminalDrag}><span/></div>
-        <section className="terminal-panel" style={{ height: terminalHeight }}>
-          <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
-          <div className="terminal-host" ref={terminalHost} onFocusCapture={() => setFocusedSurface("terminal")} onMouseDown={() => setFocusedSurface("terminal")} onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setFocusedSurface("terminal"); setTerminalFontSize(v => Math.max(8, Math.min(24, v + (e.deltaY < 0 ? 1 : -1)))); } }}/>
-        </section>
+        {terminalVisible && <>
+          <div className="terminal-resize" onMouseDown={startTerminalDrag}><span/></div>
+          <section className="terminal-panel" style={{ height: terminalHeight }}>
+            <div className="terminal-heading"><span>TERMINAL</span><span className="terminal-state">{terminalReady ? "●" : "○"}</span></div>
+            <div className="terminal-host" ref={terminalHost} onFocusCapture={() => setFocusedSurface("terminal")} onMouseDown={() => setFocusedSurface("terminal")} onWheel={e => { if (e.ctrlKey) { e.preventDefault(); setFocusedSurface("terminal"); setTerminalFontSize(v => Math.max(8, Math.min(24, v + (e.deltaY < 0 ? 1 : -1)))); } }}/>
+          </section>
+        </>}
       </section>
     </div>
-    <footer className="statusbar"><span>{status}</span><div><span>Ln {cursor.line}, Col {cursor.column}</span><span>UTF-8</span><span>{active?.name.split(".").pop()?.toUpperCase() ?? "TEXT"}</span></div></footer>
+    <footer className="statusbar"><span>{status}</span><div><button className="status-terminal-toggle" onClick={() => setTerminalVisible(v => !v)} title="Toggle terminal (Ctrl+`)">TERMINAL</button><span>Ln {cursor.line}, Col {cursor.column}</span><span>UTF-8</span><span>{active?.name.split(".").pop()?.toUpperCase() ?? "TEXT"}</span></div></footer>
   </main>;
 }
 export default App;
